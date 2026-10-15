@@ -103,8 +103,9 @@ baseline has no percentage difference. One run per arm remains descriptive only.
 The visible report leads with a fixed assertion description when verification fails,
 then per-phase deltas and guidance-inspection counters. Verbose measurements and
 whole-run totals are expandable. Public diagnostics contain only known check/stage
-identifiers, error kinds and browser/HTTP error counts, never DOM text, console
-messages, response bodies or exception text. The private runner log keeps detail.
+identifiers, error kinds, fixed reason codes (such as replaced controls or unchanged
+checkbox state) and browser/HTTP error counts. DOM text, console messages, response
+bodies and exception text remain private to the runner log.
 
 Guidance counters count deduplicated tool requests for skills, app AGENTS, packaged
 block docs and framework implementation source. Direct Read/Grep/Glob requests and
@@ -166,6 +167,7 @@ From the repository root, credential-free harness tests:
 
 ```sh
 python3 -m unittest discover -s scripts/harbor-bench -p 'test_*.py'
+node --test scripts/harbor-bench/test-browser-diagnostic.mjs
 node --check scripts/harbor-bench/registry.mjs
 node --check scripts/harbor-bench/task/tests/ui.mjs
 ```

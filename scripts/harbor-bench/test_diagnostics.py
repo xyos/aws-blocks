@@ -10,10 +10,10 @@ class DiagnosticsTests(unittest.TestCase):
     def test_failure_identifies_contract_without_publishing_runtime_text(self):
         detail = {'status': 'failed', 'checks': ['app_ready', 'prior_data'],
                   'browser_errors': 1, 'http_errors': 2,
-                  'failure': {'check': 'normalize_labels', 'kind': 'assertion',
+                  'failure': {'check': 'normalize_labels', 'kind': 'assertion', 'reason': 'value_mismatch',
                               'actual': 'secret-from-app', 'message': 'token=private'}}
         result = public_diagnostics({'failure': {'stage': 'ui_exercise', 'kind': 'runtime'}}, {'exercise': detail})
-        self.assertEqual(result['failure'], {'stage': 'ui_exercise', 'check': 'normalize_labels', 'kind': 'assertion'})
+        self.assertEqual(result['failure'], {'stage': 'ui_exercise', 'check': 'normalize_labels', 'kind': 'assertion', 'reason': 'value_mismatch'})
         self.assertEqual(result['checks_passed'], 2)
         self.assertEqual(result['browser_errors'], 1)
         self.assertNotIn('secret', json.dumps(result))

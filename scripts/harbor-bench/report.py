@@ -5,7 +5,7 @@ from pathlib import Path
 import re
 import sys
 
-from diagnostics import CHECKS, STAGES, KINDS
+from diagnostics import CHECKS, STAGES, KINDS, REASONS
 from discovery import CATEGORIES
 
 ARMS = ('baseline', 'candidate')
@@ -105,6 +105,7 @@ def render(root):
             kind = failure.get('kind') if failure.get('kind') in KINDS else 'unavailable'
             check = failure.get('check')
             explanation = CHECKS.get(check, 'No assertion diagnostic captured; inspect accounting and stage results.')
+            explanation += ' ' + REASONS.get(failure.get('reason'), '')
             failures.append(f'- **{arm} / {phase["name"]}: {stage}, {kind}.** {explanation}')
     lines += failures or ['No recorded failed phases. Missing or stopped phases are not passes.']
     lines += ['', '<details>', '<summary>Raw per-phase measurements</summary>', '']
