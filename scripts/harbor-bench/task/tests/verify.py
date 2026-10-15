@@ -15,7 +15,7 @@ OUT = Path('/logs/verifier')
 OUT.mkdir(parents=True, exist_ok=True)
 PHASE = int(os.environ['BENCH_PHASE'])
 ENV = {
-    'PATH': '/usr/local/bin:/usr/bin:/bin', 'HOME': '/home/node',
+    'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', 'HOME': '/home/node',
     'NPM_CONFIG_USERCONFIG': '/etc/bench-npmrc', 'NPM_CONFIG_GLOBALCONFIG': '/etc/bench-npm-globalrc',
     'NPM_CONFIG_CACHE': '/home/node/.npm', 'AWS_EC2_METADATA_DISABLED': 'true',
     'BLOCKS_DISABLE_TELEMETRY': '1', 'CI': '1', 'BENCH_PHASE': str(PHASE),
