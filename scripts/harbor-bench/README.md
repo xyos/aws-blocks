@@ -93,6 +93,13 @@ Turns are reported directly. Message/tool IDs are deduplicated within each strea
 Session changes, missing counters/results, or decreasing counters remain unavailable,
 not zero or a fabricated total. Cost is the CLI's **list-price estimate**, not AWS billing.
 
+The report shows signed absolute and percentage differences for each phase and for
+whole-run totals, including turns, tool calls and agent time. Available measurements
+remain visible even when correctness fails. Such rows are marked not comparable for
+efficiency; less work on a failing app is not an efficiency win. A later failed phase
+does not hide earlier passing pairs. Missing counters stay unavailable, and a zero
+baseline has no percentage difference. One run per arm remains descriptive only.
+
 Bounds: **200 turns and 25 minutes per phase**, 5 minutes per phase verifier,
 100 minutes for the Harbor process, and a 110-minute workflow job including setup.
 No automatic trial retries and **no dollar cap**. The role session is 3 hours to

@@ -8,6 +8,40 @@ import sys
 ARMS = ('baseline', 'candidate')
 PHASES = ('create', 'due-dates', 'labels')
 FIELDS = ('input_tokens', 'cache_read_tokens', 'cache_write_tokens', 'output_tokens', 'cost_usd')
+METRICS = (*FIELDS, 'turns', 'tool_calls', 'duration_ms')
+
+
+def measurements(phase):
+    return {**{key: (phase.get('usage') or {}).get(key) for key in FIELDS},
+            **{key: phase.get(key) for key in METRICS if key not in FIELDS}}
+
+
+def difference(a, b):
+    if type(a) not in (int, float) or type(b) not in (int, float):
+        return None, None
+    return b - a, (100 * (b - a) / a if a else None)
+
+
+def delta_text(a, b, cost=False):
+    delta, percent = difference(a, b)
+    if delta is None:
+        return '—'
+    absolute = f'{delta:+.4f}' if cost else f'{delta:+,.0f}'
+    if cost:
+        absolute = '$' + absolute
+    return absolute + (f' ({percent:+.1f}%)' if percent is not None else ' (baseline zero)')
+
+
+def eligible_pair(results, name):
+    for result in results:
+        if not result or result.get('harbor_exit_code') != 0 or result.get('same_session') is not True:
+            return False
+        phases = {phase['name']: phase for phase in result.get('phases', [])}
+        for required in PHASES[:PHASES.index(name) + 1]:
+            phase = phases.get(required, {})
+            if phase.get('status') != 'passed' or phase.get('accounting_complete') is not True:
+                return False
+    return True
 
 
 def load(path):
@@ -77,18 +111,38 @@ def render(root):
                       number(duration / 1000 if type(duration) in (int, float) else None), number(usage.get('cost_usd'), True)]
             lines.append('| ' + ' | '.join(cells) + ' |')
         totals[arm] = {}
-        for field in FIELDS:
-            values = [(phases.get(name, {}).get('usage') or {}).get(field) for name in PHASES]
+        for field in METRICS:
+            values = [measurements(phases.get(name, {})).get(field) for name in PHASES]
             totals[arm][field] = sum(values) if all(type(v) in (int, float) for v in values) else None
+    lines += ['', '### Measured candidate − baseline by phase', '',
+              'Arithmetic differences remain visible when a phase fails. Only pairs with passing prerequisites, '
+              'complete accounting and verified session continuity are eligible for an efficiency comparison.', '',
+              '| Phase | Efficiency comparison | Uncached input Δ | Cache read Δ | Cache write Δ | Output Δ | Turns Δ | Tools Δ | Seconds Δ | Cost Δ |',
+              '|---|---|---:|---:|---:|---:|---:|---:|---:|---:|']
+    for name in PHASES:
+        pair = [next((p for p in (arms[arm] or {}).get('phases', []) if p['name'] == name), {}) for arm in ARMS]
+        values = [measurements(p) for p in pair]
+        eligibility = 'eligible (n=1)' if eligible_pair(list(arms.values()), name) else 'not comparable for efficiency'
+        cells = [name, eligibility]
+        for field in (*FIELDS[:-1], 'turns', 'tool_calls', 'duration_ms', 'cost_usd'):
+            a, b = (v.get(field) for v in values)
+            if field == 'duration_ms':
+                a, b = (v / 1000 if type(v) in (int, float) else None for v in (a, b))
+            cells.append(delta_text(a, b, field == 'cost_usd'))
+        lines.append('| ' + ' | '.join(cells) + ' |')
     comparable = all(result and result.get('status') == 'passed' for result in arms.values())
-    if not comparable:
-        lines += ['Both arms must pass before efficiency deltas are reported. Available usage remains visible above.', '']
-    lines += ['', '### Descriptive candidate − baseline totals', '', '| Metric | Baseline | Candidate | Difference |', '|---|---:|---:|---:|']
-    for field in FIELDS:
+    lines += ['', '### Measured candidate − baseline totals', '',
+              'All phases passed in both arms; descriptive comparison only.' if comparable else
+              '**Not comparable for efficiency:** totals include failed or incomplete work. Lower usage is not an efficiency win.', '',
+              '| Metric | Baseline | Candidate | Difference |', '|---|---:|---:|---:|']
+    for field in METRICS:
         a, b = (totals.get(arm, {}).get(field) for arm in ARMS)
         cost = field == 'cost_usd'
-        delta = b - a if comparable and a is not None and b is not None else None
-        lines.append(f'| {field} | {number(a, cost)} | {number(b, cost)} | {number(delta, cost)} |')
+        label = field
+        if field == 'duration_ms':
+            label = 'agent_seconds'
+            a, b = (v / 1000 if type(v) in (int, float) else None for v in (a, b))
+        lines.append(f'| {label} | {number(a, cost)} | {number(b, cost)} | {delta_text(a, b, cost)} |')
     lines += ['', '### Interpretation and evidence', '',
               '- Success requires every phase’s build, packed-byte provenance, browser CRUD/regression suite, '
               'fresh-browser/server-restart persistence, and complete same-session accounting. Missing/failed phases are not passes.',

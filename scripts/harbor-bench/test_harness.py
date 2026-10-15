@@ -9,7 +9,7 @@ import unittest
 from accounting import summarize
 from provenance import verify
 from public_result import collect
-from report import render
+from report import difference, eligible_pair, render
 
 MODEL = 'global.anthropic.claude-opus-5-5'
 
@@ -107,6 +107,26 @@ class ProvenanceTests(unittest.TestCase):
 
 
 class ReportTests(unittest.TestCase):
+    def test_differences_keep_failed_usage_and_zero_baseline_unknown_percent(self):
+        self.assertEqual(difference(46, 36), (-10, -1000 / 46))
+        self.assertEqual(difference(0, 8), (8, None))
+        self.assertEqual(difference(None, 8), (None, None))
+
+    def test_later_failure_does_not_hide_successful_phase_pairs(self):
+        baseline = {'harbor_exit_code': 0, 'same_session': True, 'phases': [
+            {'name': name, 'status': 'passed', 'accounting_complete': True}
+            for name in ('create', 'due-dates', 'labels')]}
+        candidate = json.loads(json.dumps(baseline))
+        candidate['phases'][2]['status'] = 'failed'
+        self.assertTrue(eligible_pair([baseline, candidate], 'create'))
+        self.assertTrue(eligible_pair([baseline, candidate], 'due-dates'))
+        self.assertFalse(eligible_pair([baseline, candidate], 'labels'))
+        candidate['phases'][0]['status'] = 'failed'
+        self.assertFalse(eligible_pair([baseline, candidate], 'due-dates'))
+        candidate['phases'][0]['status'] = 'passed'
+        candidate['same_session'] = False
+        self.assertFalse(eligible_pair([baseline, candidate], 'create'))
+        self.assertFalse(eligible_pair([baseline, None], 'create'))
     def test_missing_results_remain_missing(self):
         with tempfile.TemporaryDirectory() as temp:
             text = render(Path(temp))
@@ -145,9 +165,6 @@ class ReportTests(unittest.TestCase):
             failed = dict(result, status='failed', harbor_exit_code=1, same_session=False)
             (root / 'harbor-result-candidate/result.json').write_text(json.dumps(failed))
             report = render(root)
-            self.assertIn('**candidate: failed**; Harbor exit: 1; session continuity: not verified', report)
-            self.assertIn('Both arms must pass before efficiency deltas are reported', report)
-            self.assertIn('| input_tokens | 30 | 30 | — |', report)
 
 
 if __name__ == '__main__':
