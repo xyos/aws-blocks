@@ -6,6 +6,7 @@ from harbor.agents.installed.claude_code import ClaudeCode
 from harbor.models.agent.context import ModelUsage
 
 from accounting import events, summarize
+from discovery import summarize_discovery
 
 MODEL = 'global.anthropic.claude-opus-5-5'
 CLAUDE_VERSION = '2.1.296'
@@ -78,6 +79,7 @@ class HarborBlocksClaude(ClaudeCode):
                 n_input_tokens=context.n_input_tokens, n_cache_tokens=context.n_cache_tokens or 0,
                 n_output_tokens=context.n_output_tokens, cost_usd=context.cost_usd)
         metrics['phase'] = self.phase
+        metrics['discovery'] = summarize_discovery(stream)
         tool_inputs = [
             block.get('input') or {}
             for event in events(stream) if event.get('type') == 'assistant'

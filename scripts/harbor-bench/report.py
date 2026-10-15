@@ -5,6 +5,9 @@ from pathlib import Path
 import re
 import sys
 
+from diagnostics import CHECKS, STAGES, KINDS
+from discovery import CATEGORIES
+
 ARMS = ('baseline', 'candidate')
 PHASES = ('create', 'due-dates', 'labels')
 FIELDS = ('input_tokens', 'cache_read_tokens', 'cache_write_tokens', 'output_tokens', 'cost_usd')
@@ -87,9 +90,24 @@ def render(root):
     if all(arms.values()):
         if digests(arms['baseline']) == digests(arms['candidate']):
             lines += ['**A/A infrastructure demonstration:** baseline and candidate packed package digests are identical. '
-                      'Any observed token/time differences are agent variation, not evidence of a framework improvement.', '']
+                      'Observed differences may include agent and runtime variation; they do not establish a framework improvement.', '']
         else:
             lines += ['Packed package digests differ; this is a single descriptive baseline/candidate comparison.', '']
+    lines += ['### What needs attention', '']
+    failures = []
+    for arm, result in arms.items():
+        for phase in (result or {}).get('phases', []):
+            if phase.get('status') != 'failed' or phase.get('name') not in PHASES:
+                continue
+            diagnostic = phase.get('diagnostics') or {}
+            failure = diagnostic.get('failure') or {}
+            stage = failure.get('stage') if failure.get('stage') in STAGES else 'verification'
+            kind = failure.get('kind') if failure.get('kind') in KINDS else 'unavailable'
+            check = failure.get('check')
+            explanation = CHECKS.get(check, 'No assertion diagnostic captured; inspect accounting and stage results.')
+            failures.append(f'- **{arm} / {phase["name"]}: {stage}, {kind}.** {explanation}')
+    lines += failures or ['No recorded failed phases. Missing or stopped phases are not passes.']
+    lines += ['', '<details>', '<summary>Raw per-phase measurements</summary>', '']
     lines += ['| Arm / phase | Outcome | Input (uncached) | Cache read | Cache write | Output | Turns | Tools | Agent seconds | CLI list-price estimate |',
               '|---|---|---:|---:|---:|---:|---:|---:|---:|---:|']
     totals = {}
@@ -114,22 +132,42 @@ def render(root):
         for field in METRICS:
             values = [measurements(phases.get(name, {})).get(field) for name in PHASES]
             totals[arm][field] = sum(values) if all(type(v) in (int, float) for v in values) else None
+    lines += ['', '</details>', '']
     lines += ['', '### Measured candidate − baseline by phase', '',
               'Arithmetic differences remain visible when a phase fails. Only pairs with passing prerequisites, '
               'complete accounting and verified session continuity are eligible for an efficiency comparison.', '',
-              '| Phase | Efficiency comparison | Uncached input Δ | Cache read Δ | Cache write Δ | Output Δ | Turns Δ | Tools Δ | Seconds Δ | Cost Δ |',
-              '|---|---|---:|---:|---:|---:|---:|---:|---:|---:|']
+              '| Phase | Comparison | New input Δ | Cache read Δ | Turns Δ | Tools Δ | Seconds Δ | Cost Δ |',
+              '|---|---|---:|---:|---:|---:|---:|---:|']
     for name in PHASES:
         pair = [next((p for p in (arms[arm] or {}).get('phases', []) if p['name'] == name), {}) for arm in ARMS]
         values = [measurements(p) for p in pair]
         eligibility = 'eligible (n=1)' if eligible_pair(list(arms.values()), name) else 'not comparable for efficiency'
         cells = [name, eligibility]
-        for field in (*FIELDS[:-1], 'turns', 'tool_calls', 'duration_ms', 'cost_usd'):
+        for field in ('new_input', 'cache_read_tokens', 'turns', 'tool_calls', 'duration_ms', 'cost_usd'):
             a, b = (v.get(field) for v in values)
+            if field == 'new_input':
+                a, b = (v['input_tokens'] + v['cache_write_tokens']
+                        if all(type(v.get(k)) in (int, float) for k in ('input_tokens', 'cache_write_tokens'))
+                        else None for v in values)
             if field == 'duration_ms':
                 a, b = (v / 1000 if type(v) in (int, float) else None for v in (a, b))
             cells.append(delta_text(a, b, field == 'cost_usd'))
         lines.append('| ' + ' | '.join(cells) + ' |')
+    lines += ['', 'New input = uncached input + cache writes. Raw output and cache-write counts are in the expandable measurements.', '',
+              '### How the agent looked for guidance', '',
+              '| Arm / phase | Skill requests | AGENTS requests | Block docs requests | Framework source requests | Failed tools |',
+              '|---|---:|---:|---:|---:|---:|']
+    for arm, result in arms.items():
+        for phase in (result or {}).get('phases', []):
+            if phase.get('name') not in PHASES:
+                continue
+            discovery = phase.get('discovery') or {}
+            cells = [f'{arm} / {phase["name"]}'] + [number(discovery.get(k)) for k in (*CATEGORIES, 'failed_tools')]
+            lines.append('| ' + ' | '.join(cells) + ' |')
+    lines += ['', 'These are deduplicated inspection requests, not proof that the file was read successfully. '
+              'Shell parsing covers direct read/search commands only; embedded scripts and automatic context injection are not counted. '
+              'One tool call can inspect more than one category. Missing capture is unavailable, not zero.', '',
+              '<details>', '<summary>Whole-run totals and interpretation</summary>', '']
     comparable = all(result and result.get('status') == 'passed' for result in arms.values())
     lines += ['', '### Measured candidate − baseline totals', '',
               'All phases passed in both arms; descriptive comparison only.' if comparable else
@@ -152,7 +190,7 @@ def render(root):
               'Each phase is bounded to 200 turns / 25 minutes; the whole Harbor process is bounded to 100 minutes.',
               '- Result artifacts contain phase metrics, consumed package hashes, and tool-name-only traces. '
               'Raw model text, shell commands, native sessions, generated app files, credentials, and AWS identities are not uploaded.',
-              '- This workflow is non-required/advisory. A red job is preserved honestly; do not configure it as a branch-protection gate.', '']
+              '- This workflow is non-required/advisory. A red job is preserved honestly; do not configure it as a branch-protection gate.', '', '</details>', '']
     return '\n'.join(lines)
 
 

@@ -79,8 +79,8 @@ The app must use Blocks RPC and persistence; UI mutations are observed as backen
 POST requests. Source checks are a sanity check, not a formal proof of semantic use.
 
 A benchmark-only PR can produce **byte-identical baseline/candidate packages**. The
-report calls that an **A/A infrastructure demonstration** and explicitly attributes
-variation to the agent rather than inventing a framework efficiency win.
+report calls that an **A/A infrastructure demonstration**. Differences can include
+agent and runtime variation, not evidence of a framework efficiency win.
 
 ## Usage semantics
 
@@ -100,6 +100,18 @@ efficiency; less work on a failing app is not an efficiency win. A later failed 
 does not hide earlier passing pairs. Missing counters stay unavailable, and a zero
 baseline has no percentage difference. One run per arm remains descriptive only.
 
+The visible report leads with a fixed assertion description when verification fails,
+then per-phase deltas and guidance-inspection counters. Verbose measurements and
+whole-run totals are expandable. Public diagnostics contain only known check/stage
+identifiers, error kinds and browser/HTTP error counts, never DOM text, console
+messages, response bodies or exception text. The private runner log keeps detail.
+
+Guidance counters count deduplicated tool requests for skills, app AGENTS, packaged
+block docs and framework implementation source. Direct Read/Grep/Glob requests and
+simple shell read/search commands are recognized. Embedded scripts, multiline shell,
+and automatic instruction loading are not counted. A request is not proof that a
+file was read or understood. Failed tools count explicit error results only.
+
 Bounds: **200 turns and 25 minutes per phase**, 5 minutes per phase verifier,
 100 minutes for the Harbor process, and a 110-minute workflow job including setup.
 No automatic trial retries and **no dollar cap**. The role session is 3 hours to
@@ -114,8 +126,10 @@ The repository owner must configure:
   before approving a paid run. The owner must also be permitted to approve the demo
   (do not require an unavailable second reviewer).
 - Environment secret **`AWS_ROLE_ARN`** pointing to a dedicated GitHub OIDC role.
-  Trust audience `sts.amazonaws.com`, subject
-  `repo:xyos/aws-blocks:environment:harbor-bench`, max session duration at least 10800.
+  Trust audience `sts.amazonaws.com` and the repository's actual OIDC subject prefix
+  plus `:environment:harbor-bench`; inspect the repository OIDC customization API.
+  New repositories can use immutable owner/repository IDs in that prefix. Do not
+  replace exact trust with a wildcard. Max session duration must be at least 10800.
 - Role policy allowing only `bedrock:InvokeModel` and
   `bedrock:InvokeModelWithResponseStream` on the selected global inference profile
   and its `anthropic.claude-opus-5-5` foundation-model ARNs in routed regions.
@@ -191,12 +205,12 @@ normal Harbor completion deletes them. Raw files under `.harbor-bench` are local
 
 ## Artifacts and security boundaries
 
-Public `harbor-result-{arm}` artifacts contain only phase result JSON, selected package
-names/versions/hashes, and tool-name-only chronological traces. The comparison artifact
-and PR comment link to the workflow run. **Raw prompts, shell commands/output, native
-sessions, ATIF text, app files, and error tracebacks are not uploaded**, because an agent
-can accidentally print credentials. Tool names are allowlisted. CLI session IDs and AWS
-account/role identities are not included. Raw Harbor logs remain ephemeral on the runner.
+Public `harbor-result-{arm}` artifacts contain phase result JSON, selected package
+names/versions/hashes, tool-name-only chronological traces, fixed verifier check
+identifiers and guidance-request counts. The comparison artifact and PR comment link
+to the workflow run. **Raw prompts, commands/output, native sessions, ATIF text, app
+files, DOM/console text and exception tracebacks are not uploaded.** Tool names and
+diagnostic fields are allowlisted; session IDs and AWS identities are excluded.
 
 The container receives **only model-role STS credentials**, passed via exec environment,
 not build args, Docker image layers, files, artifacts, or configuration JSON. The host

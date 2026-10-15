@@ -64,26 +64,33 @@ def command(args, filename, timeout=120, app=False):
 
 
 result = {'phase': PHASE, 'status': 'failed', 'checks': {}}
+stage = 'package_provenance'
 try:
     stop()
     provenance = verify()
     (OUT / 'provenance.json').write_text(json.dumps(provenance, indent=2))
     result['checks']['package_provenance'] = True
+    stage = 'build'
     command(['runuser', '-u', 'node', '--', 'npm', 'run', 'build'], 'build.log', app=True)
     result['checks']['build'] = True
+    stage = 'server_start'
     start()
+    stage = 'ui_exercise'
     command(['node', '/tests/ui.mjs', 'exercise'], 'ui.log')
     result['checks']['all_phases_and_reload'] = True
     stop()
     if server_log:
         server_log.close()
+    stage = 'server_restart'
     start()
+    stage = 'ui_survival'
     command(['node', '/tests/ui.mjs', 'survival'], 'ui.log', timeout=60)
     result['checks']['server_restart_fresh_browser'] = True
     result['status'] = 'passed'
 except Exception as error:
     # Details remain in local logs, never copied wholesale into public summary.
     result['error_type'] = type(error).__name__
+    result['failure'] = {'stage': stage, 'kind': 'timeout' if isinstance(error, subprocess.TimeoutExpired) else 'runtime'}
     print(f'verifier failure: {error}', file=sys.stderr)
 finally:
     stop()

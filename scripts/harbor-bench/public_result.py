@@ -2,6 +2,8 @@
 import json
 
 from accounting import events
+from diagnostics import public_diagnostics, count
+from discovery import CATEGORIES
 
 PHASES = ('create', 'due-dates', 'labels')
 TOOLS = {'Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'TodoWrite', 'Skill', 'ToolSearch'}
@@ -45,6 +47,8 @@ def collect(work, identity, exit_code, error):
             session_ids.add(metrics['session_id'])
         step_dir = trial_path.parent / 'steps' / name
         verification = load(step_dir / 'verifier' / 'verification.json') or {}
+        ui_results = {mode: data for mode in ('exercise', 'survival')
+                      if (data := load(step_dir / 'verifier' / f'ui-{mode}.json')) is not None}
         accounting_ok = bool(metrics) and not metrics.get('accounting_errors')
         checks = {key: verification.get('checks', {}).get(key) is True for key in
                   ('package_provenance', 'build', 'all_phases_and_reload', 'server_restart_fresh_browser')}
@@ -66,6 +70,9 @@ def collect(work, identity, exit_code, error):
             'usage': {key: numeric((metrics.get('usage') or {}).get(key)) for key in
                       ('input_tokens', 'cache_read_tokens', 'cache_write_tokens', 'output_tokens', 'cost_usd')},
             'checks': checks,
+            'diagnostics': public_diagnostics(verification, ui_results),
+            'discovery': {key: count((metrics.get('discovery') or {}).get(key))
+                          for key in (*CATEGORIES, 'failed_tools', 'observed_tools')},
         }
         result['phases'].append(phase)
         # Safe trace: tool shape/count/timing evidence, NOT prompts, commands, outputs, IDs, or paths.
