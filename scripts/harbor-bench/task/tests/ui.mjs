@@ -71,13 +71,13 @@ try {
 		let todo;
 		await check('create_todo', async () => { todo = await add(title); });
 		await check('complete_todo', async () => {
-			await mutate(() => todo.getByLabel('Completed', { exact: true }).check());
+			await mutate(() => todo.getByLabel('Completed', { exact: true }).click());
 			await page.reload({ waitUntil: 'networkidle' });
 			todo = await saved(title);
 			assert.equal(await todo.getByLabel('Completed', { exact: true }).isChecked(), true);
 		});
 		await check('edit_todo', async () => {
-			await mutate(() => todo.getByLabel('Completed', { exact: true }).uncheck());
+			await mutate(() => todo.getByLabel('Completed', { exact: true }).click());
 			await todo.getByLabel('Edit title', { exact: true }).fill(`${title}-edited`);
 			await mutate(() => todo.getByRole('button', { name: 'Save todo', exact: true }).click());
 			todo = await saved(`${title}-edited`);
@@ -130,7 +130,7 @@ try {
 		await check('seed_survival', async () => {
 			const expected = { title: `survival-${randomUUID()}`, completed: true, due: '', labels: [] };
 			todo = await add(expected.title);
-			await mutate(() => todo.getByLabel('Completed', { exact: true }).check());
+			await mutate(() => todo.getByLabel('Completed', { exact: true }).click());
 			if (phase >= 2) {
 				expected.due = '2032-06-07';
 				await todo.getByLabel('Due date', { exact: true }).fill(expected.due);

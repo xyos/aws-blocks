@@ -107,6 +107,13 @@ identifiers, error kinds, fixed reason codes (such as replaced controls or uncha
 checkbox state) and browser/HTTP error counts. DOM text, console messages, response
 bodies and exception text remain private to the runner log.
 
+Before model credentials are assumed, a credential-free browser self-check exercises
+the verifier on a small reference app. It accepts backend-confirmed checkbox updates
+and rejects lost completion and duplicate-label defects at their named assertions.
+The reference is never copied into agent task images. Checkbox verification clicks
+once, waits for the backend response, then verifies saved state after reload; it does
+not require an optimistic immediate UI update from Playwright's `check()` helper.
+
 Guidance counters count deduplicated tool requests for skills, app AGENTS, packaged
 block docs and framework implementation source. Direct Read/Grep/Glob requests and
 simple shell read/search commands are recognized. Embedded scripts, multiline shell,
@@ -171,6 +178,9 @@ node --test scripts/harbor-bench/test-browser-diagnostic.mjs
 node --check scripts/harbor-bench/registry.mjs
 node --check scripts/harbor-bench/task/tests/ui.mjs
 ```
+
+After building a task image, run the same deterministic browser self-check locally:
+`python3 scripts/harbor-bench/check_verifier.py --image <built-task-image>`.
 
 Repository checks remain the contributor guide's build, `lint:deps`, unit tests, and
 local e2e. There are no published-package changes, so this prototype needs no package

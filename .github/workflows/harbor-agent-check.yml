@@ -116,6 +116,7 @@ jobs:
           python scripts/harbor-bench/prepare.py --registry packed --output run --arm "$ARM" --commit "$COMMIT"
           image=$(python -c 'import json; print(json.load(open("run/identity.json"))["image"])')
           docker build --tag "$image" run/task/environment
+          python scripts/harbor-bench/check_verifier.py --image "$image"
       - name: Assume dedicated Bedrock-only role
         uses: aws-actions/configure-aws-credentials@e7f100cf4c008499ea8adda475de1042d6975c7b # v6.2.0
         with:
