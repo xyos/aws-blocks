@@ -492,7 +492,10 @@ jobs:
 
   e2e-templates:
     name: E2E Templates
-    needs: [build-and-test-local, detect-changes]
+    # Needs only the dist-registry artifact from Local Build and Checks, so it
+    # starts as soon as that job is done instead of waiting for the unit test
+    # shards and Local E2E. Build and Test still requires every local part.
+    needs: [local-build, detect-changes]
     if: contains(fromJSON(needs.detect-changes.outputs.e2e-run), 'templates') && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -537,7 +540,10 @@ jobs:
   # real Windows deploy smoke stays in windows-e2e.yml (scheduled).
   e2e-templates-windows:
     name: E2E Templates (Windows)
-    needs: [build-and-test-local, detect-changes]
+    # Needs only the dist-registry artifact from Local Build and Checks, so it
+    # starts as soon as that job is done instead of waiting for the unit test
+    # shards and Local E2E. Build and Test still requires every local part.
+    needs: [local-build, detect-changes]
     if: contains(fromJSON(needs.detect-changes.outputs.e2e-run), 'templates-windows') && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: windows-latest
     timeout-minutes: 60
