@@ -1,7 +1,7 @@
 name: Install dependencies
 description: >-
   Sets up Node and installs the workspace's dependencies. Restores node_modules
-  from the cache that node-modules-cache.yml saves on main for this lockfile,
+  from the cache that dependency-caches.yml saves on main for this lockfile,
   Node version, OS and CPU, and runs npm ci only on a miss. A cache saved on
   the default branch is readable from every PR, whereas one a PR saves is
   readable only from that PR, so PR runs only read: a miss (a PR that changes
@@ -12,7 +12,7 @@ inputs:
   save:
     description: >-
       'true' saves node_modules after a miss, and only checks for a hit
-      (without downloading it). For node-modules-cache.yml on main only.
+      (without downloading it). For dependency-caches.yml on main only.
     required: false
     default: 'false'
 runs:
@@ -44,7 +44,7 @@ runs:
 
     - if: steps.restore.outputs.cache-hit != 'true'
       shell: bash
-      run: npm ci
+      run: npm ci --prefer-offline --no-audit --no-fund
 
     - if: inputs.save == 'true' && steps.restore.outputs.cache-hit != 'true'
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
