@@ -136,35 +136,35 @@ export class AuthCognito<const O extends AuthCognitoMockOptions = AuthCognitoMoc
 
 // @public
 export const AuthCognitoErrors: {
-    readonly NotAuthenticated: "NotAuthenticatedException";
-    readonly NotAuthorized: "NotAuthorizedException";
-    readonly UserNotFound: "UserNotFoundException";
-    readonly UserAlreadyExists: "UsernameExistsException";
-    readonly InvalidPassword: "InvalidPasswordException";
-    readonly InvalidParameter: "InvalidParameterException";
-    readonly CodeMismatch: "CodeMismatchException";
-    readonly ExpiredCode: "ExpiredCodeException";
-    readonly LimitExceeded: "LimitExceededException";
-    readonly TooManyRequests: "TooManyRequestsException";
-    readonly TooManyFailedAttempts: "TooManyFailedAttemptsException";
-    readonly PasswordResetRequired: "PasswordResetRequiredException";
-    readonly UserNotConfirmed: "UserNotConfirmedException";
-    readonly MFAMethodNotFound: "MFAMethodNotFoundException";
-    readonly SoftwareTokenMFANotFound: "SoftwareTokenMFANotFoundException";
-    readonly GroupNotFound: "ResourceNotFoundException";
-    readonly UnsupportedUserState: "UnsupportedUserStateException";
-    readonly AliasExists: "AliasExistsException";
-    readonly InvalidLambdaResponse: "InvalidLambdaResponseException";
-    readonly UserLambdaValidation: "UserLambdaValidationException";
-    readonly InternalError: "InternalErrorException";
-    readonly EnableSoftwareTokenMFA: "EnableSoftwareTokenMFAException";
-    readonly WebAuthnNotEnabled: "WebAuthnNotEnabledException";
-    readonly WebAuthnOriginNotAllowed: "WebAuthnOriginNotAllowedException";
-    readonly WebAuthnRelyingPartyMismatch: "WebAuthnRelyingPartyMismatchException";
-    readonly WebAuthnChallengeNotFound: "WebAuthnChallengeNotFoundException";
-    readonly WebAuthnCredentialNotSupported: "WebAuthnCredentialNotSupportedException";
-    readonly WebAuthnClientMismatch: "WebAuthnClientMismatchException";
-    readonly WebAuthnConfigurationMissing: "WebAuthnConfigurationMissingException";
+    readonly NotAuthenticated: 'NotAuthenticatedException';
+    readonly NotAuthorized: 'NotAuthorizedException';
+    readonly UserNotFound: 'UserNotFoundException';
+    readonly UserAlreadyExists: 'UsernameExistsException';
+    readonly InvalidPassword: 'InvalidPasswordException';
+    readonly InvalidParameter: 'InvalidParameterException';
+    readonly CodeMismatch: 'CodeMismatchException';
+    readonly ExpiredCode: 'ExpiredCodeException';
+    readonly LimitExceeded: 'LimitExceededException';
+    readonly TooManyRequests: 'TooManyRequestsException';
+    readonly TooManyFailedAttempts: 'TooManyFailedAttemptsException';
+    readonly PasswordResetRequired: 'PasswordResetRequiredException';
+    readonly UserNotConfirmed: 'UserNotConfirmedException';
+    readonly MFAMethodNotFound: 'MFAMethodNotFoundException';
+    readonly SoftwareTokenMFANotFound: 'SoftwareTokenMFANotFoundException';
+    readonly GroupNotFound: 'ResourceNotFoundException';
+    readonly UnsupportedUserState: 'UnsupportedUserStateException';
+    readonly AliasExists: 'AliasExistsException';
+    readonly InvalidLambdaResponse: 'InvalidLambdaResponseException';
+    readonly UserLambdaValidation: 'UserLambdaValidationException';
+    readonly InternalError: 'InternalErrorException';
+    readonly EnableSoftwareTokenMFA: 'EnableSoftwareTokenMFAException';
+    readonly WebAuthnNotEnabled: 'WebAuthnNotEnabledException';
+    readonly WebAuthnOriginNotAllowed: 'WebAuthnOriginNotAllowedException';
+    readonly WebAuthnRelyingPartyMismatch: 'WebAuthnRelyingPartyMismatchException';
+    readonly WebAuthnChallengeNotFound: 'WebAuthnChallengeNotFoundException';
+    readonly WebAuthnCredentialNotSupported: 'WebAuthnCredentialNotSupportedException';
+    readonly WebAuthnClientMismatch: 'WebAuthnClientMismatchException';
+    readonly WebAuthnConfigurationMissing: 'WebAuthnConfigurationMissingException';
 };
 
 // @public

@@ -36,12 +36,12 @@ export class DistributedDatabase extends Scope {
 
 // @public
 export const DistributedDatabaseErrors: {
-    readonly QueryFailed: "QueryFailedException";
-    readonly ConnectionFailed: "ConnectionFailedException";
-    readonly TransactionFailed: "TransactionFailedException";
-    readonly UniqueConstraintViolation: "UniqueConstraintViolationException";
-    readonly SerializationFailure: "SerializationFailureException";
-    readonly TransactionRowLimitExceeded: "TransactionRowLimitExceededException";
+    readonly QueryFailed: 'QueryFailedException';
+    readonly ConnectionFailed: 'ConnectionFailedException';
+    readonly TransactionFailed: 'TransactionFailedException';
+    readonly UniqueConstraintViolation: 'UniqueConstraintViolationException';
+    readonly SerializationFailure: 'SerializationFailureException';
+    readonly TransactionRowLimitExceeded: 'TransactionRowLimitExceededException';
 };
 
 // @public (undocumented)

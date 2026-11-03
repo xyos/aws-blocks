@@ -18,10 +18,10 @@ export class CronJob<T = void> extends Scope {
 
 // @public
 export const CronJobErrors: {
-    readonly InvalidSchedule: "InvalidScheduleExpression";
-    readonly ScheduleNotSupported: "ScheduleNotSupportedInMock";
-    readonly InvalidTimezone: "InvalidTimezoneExpression";
-    readonly UnsupportedCompute: "UnsupportedComputeException";
+    readonly InvalidSchedule: 'InvalidScheduleExpression';
+    readonly ScheduleNotSupported: 'ScheduleNotSupportedInMock';
+    readonly InvalidTimezone: 'InvalidTimezoneExpression';
+    readonly UnsupportedCompute: 'UnsupportedComputeException';
 };
 
 // @public

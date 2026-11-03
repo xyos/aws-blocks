@@ -290,7 +290,7 @@ export class RawRoute extends Scope {
 
 // @public
 export const RawRouteErrors: {
-    readonly DuplicateRoute: "DuplicateRouteException";
+    readonly DuplicateRoute: 'DuplicateRouteException';
 };
 
 // @public (undocumented)

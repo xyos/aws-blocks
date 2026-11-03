@@ -58,9 +58,9 @@ export class KVStore<T = string> extends Scope {
 
 // @public
 export const KVStoreErrors: {
-    readonly ConditionalCheckFailed: "ConditionalCheckFailedException";
-    readonly ValidationFailed: "ValidationFailedException";
-    readonly ItemTooLarge: "ItemTooLargeException";
+    readonly ConditionalCheckFailed: 'ConditionalCheckFailedException';
+    readonly ValidationFailed: 'ValidationFailedException';
+    readonly ItemTooLarge: 'ItemTooLargeException';
 };
 
 // @public (undocumented)

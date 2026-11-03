@@ -59,14 +59,14 @@ export class AuthBasic extends Scope implements BlocksAuth {
 
 // @public
 export const AuthBasicErrors: {
-    readonly InvalidCredentials: "InvalidCredentialsException";
-    readonly UserAlreadyExists: "UserAlreadyExistsException";
-    readonly InvalidCode: "InvalidCodeException";
-    readonly SessionExpired: "SessionExpiredException";
-    readonly SessionRevoked: "SessionRevokedException";
-    readonly SignOutIncomplete: "SignOutIncompleteException";
-    readonly InvalidPassword: "InvalidPasswordException";
-    readonly AccountLocked: "AccountLockedException";
+    readonly InvalidCredentials: 'InvalidCredentialsException';
+    readonly UserAlreadyExists: 'UserAlreadyExistsException';
+    readonly InvalidCode: 'InvalidCodeException';
+    readonly SessionExpired: 'SessionExpiredException';
+    readonly SessionRevoked: 'SessionRevokedException';
+    readonly SignOutIncomplete: 'SignOutIncompleteException';
+    readonly InvalidPassword: 'InvalidPasswordException';
+    readonly AccountLocked: 'AccountLockedException';
 };
 
 // @public

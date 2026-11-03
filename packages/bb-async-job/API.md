@@ -46,15 +46,15 @@ export interface AsyncJobContext {
 
 // @public
 export const AsyncJobErrors: {
-    readonly PayloadTooLarge: "PayloadTooLargeException";
-    readonly BatchEmpty: "BatchEmptyException";
-    readonly BatchTooLarge: "BatchTooLargeException";
-    readonly ValidationFailed: "ValidationFailedException";
-    readonly BatchSubmitFailed: "BatchSubmitFailedException";
-    readonly Timeout: "AsyncJobTimeoutException";
-    readonly StatusNotTracked: "StatusNotTrackedException";
-    readonly InvalidOption: "InvalidOptionException";
-    readonly UnsupportedCompute: "UnsupportedComputeException";
+    readonly PayloadTooLarge: 'PayloadTooLargeException';
+    readonly BatchEmpty: 'BatchEmptyException';
+    readonly BatchTooLarge: 'BatchTooLargeException';
+    readonly ValidationFailed: 'ValidationFailedException';
+    readonly BatchSubmitFailed: 'BatchSubmitFailedException';
+    readonly Timeout: 'AsyncJobTimeoutException';
+    readonly StatusNotTracked: 'StatusNotTrackedException';
+    readonly InvalidOption: 'InvalidOptionException';
+    readonly UnsupportedCompute: 'UnsupportedComputeException';
 };
 
 // @public

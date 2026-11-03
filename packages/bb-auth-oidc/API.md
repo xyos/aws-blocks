@@ -26,14 +26,14 @@ export type AuthOIDCErrorName = (typeof AuthOIDCErrors)[keyof typeof AuthOIDCErr
 
 // @public
 export const AuthOIDCErrors: {
-    readonly NotAuthenticated: "NotAuthenticatedException";
-    readonly TokenExpired: "TokenExpiredException";
-    readonly InvalidState: "InvalidStateException";
-    readonly InvalidCallback: "InvalidCallbackException";
-    readonly ProviderNotConfigured: "ProviderNotConfiguredException";
-    readonly IdpError: "IdpErrorException";
-    readonly InvalidRelay: "InvalidRelayException";
-    readonly SdkOutdated: "SdkOutdatedException";
+    readonly NotAuthenticated: 'NotAuthenticatedException';
+    readonly TokenExpired: 'TokenExpiredException';
+    readonly InvalidState: 'InvalidStateException';
+    readonly InvalidCallback: 'InvalidCallbackException';
+    readonly ProviderNotConfigured: 'ProviderNotConfiguredException';
+    readonly IdpError: 'IdpErrorException';
+    readonly InvalidRelay: 'InvalidRelayException';
+    readonly SdkOutdated: 'SdkOutdatedException';
 };
 
 // Warning: (ae-forgotten-export) The symbol "CognitoFederatedOpts" needs to be exported by the entry point index.aws.d.ts

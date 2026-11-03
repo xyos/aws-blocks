@@ -48,10 +48,10 @@ export interface RealtimeChannelDescriptor {
 
 // @public
 export const RealtimeErrors: {
-    readonly PublishFailed: "PublishFailedException";
-    readonly ValidationFailed: "ValidationFailedException";
-    readonly ConnectionFailed: "ConnectionFailedException";
-    readonly UnsupportedCompute: "UnsupportedComputeException";
+    readonly PublishFailed: 'PublishFailedException';
+    readonly ValidationFailed: 'ValidationFailedException';
+    readonly ConnectionFailed: 'ConnectionFailedException';
+    readonly UnsupportedCompute: 'UnsupportedComputeException';
 };
 
 // @public (undocumented)
