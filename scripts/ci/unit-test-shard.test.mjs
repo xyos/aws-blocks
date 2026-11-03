@@ -154,7 +154,7 @@ describe('pr-checks.yml', () => {
 	const aggregator = jobs['build-and-test-local'];
 
 	it('has the parts of the local check', () => {
-		assert.deepEqual(parts.sort(), ['local-build', 'local-e2e', 'local-unit']);
+		assert.deepEqual(parts.sort(), ['local-build', 'local-checks', 'local-e2e', 'local-unit']);
 	});
 
 	it('keeps the required check name on an always() job that needs every part', () => {
