@@ -12,6 +12,8 @@ on:
     # Daily at 16:00 UTC (default branch only).
     - cron: '0 16 * * *'
   pull_request:
+    # ciexp (fork-only): PRs in the CI-speed fork target ciexp-base, so restrict to main.
+    branches: [main]
     paths:
       - '.github/workflows/canary.yml'
       - 'scripts/canary/**'

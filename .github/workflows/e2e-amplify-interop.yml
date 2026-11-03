@@ -6,7 +6,8 @@ name: E2E Amplify Interop
 
 on:
   pull_request:
-    branches: ['*']
+    # ciexp (fork-only): PRs in the CI-speed fork target ciexp-base, so restrict to main.
+    branches: [main]
 
 concurrency:
   group: e2e-amplify-interop-${{ github.event.pull_request.number }}

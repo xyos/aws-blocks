@@ -9,6 +9,8 @@ name: Native Dart Analysis
 
 on:
   pull_request:
+    # ciexp (fork-only): PRs in the CI-speed fork target ciexp-base, so restrict to main.
+    branches: [main]
     paths:
       - 'native/dart/packages/**'
       - 'native/codegen-fixtures/**'

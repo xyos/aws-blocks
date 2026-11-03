@@ -69,13 +69,13 @@ jobs:
       # E2E account for this PR (see .github/actions/e2e-slot).
       e2e-index: ${{ steps.e2e-slot.outputs.index }}
       # JSON array of the E2E jobs to run, e.g. ["sandbox","hosting"]
-      e2e: ${{ steps.check.outputs.e2e }}
+      e2e: ${{ steps.fork.outputs.e2e }}
       # JSON array of the E2E jobs the changes call for but the trailer left
       # out. Each fails in its first step.
       e2e-blocked: ${{ steps.check.outputs.blocked }}
       # e2e + e2e-blocked: the E2E jobs that start. Each E2E job's `if:` checks
       # this one, so a blocked job can't be skipped by checking only `e2e`.
-      e2e-run: ${{ steps.check.outputs.run }}
+      e2e-run: ${{ steps.fork.outputs.run }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -87,6 +87,22 @@ jobs:
         env:
           E2E_ACCOUNT: ${{ steps.e2e-slot.outputs.account }}
         run: scripts/ci/e2e-selection.sh origin/main
+      # ciexp (fork-only): the CI-speed fork has no AWS accounts or secrets, so
+      # only the AWS-free E2E lanes (templates, templates-windows) may start.
+      # The AWS lanes (sandbox, sandbox-vpc, compute-smoke, production,
+      # supabase, hosting, telemetry) are dropped from the selection and skip;
+      # the Build and Test gate already treats a skipped E2E job as passing.
+      # Done here, not with `if: false`, so required-checks.test.mjs (run in
+      # Local Build and Checks) still sees the upstream job graph.
+      - id: fork
+        env:
+          E2E: ${{ steps.check.outputs.e2e }}
+          RUN: ${{ steps.check.outputs.run }}
+        run: |
+          keep='map(select(. == "templates" or . == "templates-windows"))'
+          echo "e2e=$(jq -c "$keep" <<<"$E2E")" >> "$GITHUB_OUTPUT"
+          echo "run=$(jq -c "$keep" <<<"$RUN")" >> "$GITHUB_OUTPUT"
+          echo "E2E lanes kept: $(jq -c "$keep" <<<"$RUN")"
 
   blocks-integrity:
     name: Blocks Package Integrity

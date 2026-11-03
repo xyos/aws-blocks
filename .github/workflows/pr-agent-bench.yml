@@ -37,6 +37,8 @@ on:
   # those inline cell defs won't auto-trigger; use workflow_dispatch to bench them.
   pull_request:
     types: [opened, synchronize, reopened]
+    # ciexp (fork-only): PRs in the CI-speed fork target ciexp-base, so restrict to main.
+    branches: [main]
     paths:
       - 'packages/**'
       - 'scripts/agent-bench/**'
