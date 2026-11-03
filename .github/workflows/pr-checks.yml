@@ -34,6 +34,9 @@ env:
   # Use the 'spec' reporter for node:test — produces a clean, hierarchical
   # pass/fail summary instead of verbose TAP output with per-test YAML blocks.
   NODE_OPTIONS: '--test-reporter=spec'
+  # puppeteer (a dependency of the local-only tech-design PDF script) downloads
+  # ~300 MB of Chrome in its postinstall on every npm ci; no CI job uses it.
+  PUPPETEER_SKIP_DOWNLOAD: 'true'
 
 jobs:
   # Picks the E2E jobs to run. By default that is every E2E job when the PR
@@ -120,7 +123,7 @@ jobs:
           node-version-file: '.nvmrc'
           cache: npm
 
-      - run: npm ci
+      - run: npm ci --prefer-offline --no-audit --no-fund
 
       - name: Sync block docs (prebuild step)
         run: node scripts/gen-block-docs.mjs
@@ -212,7 +215,7 @@ jobs:
           node-version-file: '.nvmrc'
           cache: npm
 
-      - run: npm ci --ignore-scripts
+      - run: npm ci --ignore-scripts --prefer-offline --no-audit --no-fund
 
       - name: Build
         run: npm run build
@@ -243,7 +246,7 @@ jobs:
       # usage metrics).
       - uses: ./.github/actions/seed-telemetry-id
 
-      - run: npm ci
+      - run: npm ci --prefer-offline --no-audit --no-fund
 
       - name: Lint (advisory — annotations only, non-blocking)
         run: npm run lint
@@ -375,7 +378,7 @@ jobs:
       # usage metrics).
       - uses: ./.github/actions/seed-telemetry-id
 
-      - run: npm ci
+      - run: npm ci --prefer-offline --no-audit --no-fund
 
       - name: Build
         run: npm run build
@@ -454,7 +457,7 @@ jobs:
       # usage metrics).
       - uses: ./.github/actions/seed-telemetry-id
 
-      - run: npm ci
+      - run: npm ci --prefer-offline --no-audit --no-fund
 
       - name: Build
         run: npm run build
@@ -518,7 +521,7 @@ jobs:
       # usage metrics).
       - uses: ./.github/actions/seed-telemetry-id
 
-      - run: npm ci
+      - run: npm ci --prefer-offline --no-audit --no-fund
 
       - name: Download registry artifact
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
@@ -563,7 +566,7 @@ jobs:
       # usage metrics).
       - uses: ./.github/actions/seed-telemetry-id
 
-      - run: npm ci
+      - run: npm ci --prefer-offline --no-audit --no-fund
 
       - name: Download registry artifact
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
@@ -628,7 +631,7 @@ jobs:
       # usage metrics).
       - uses: ./.github/actions/seed-telemetry-id
 
-      - run: npm ci
+      - run: npm ci --prefer-offline --no-audit --no-fund
       - run: npm run build
 
       - name: Configure AWS credentials
@@ -713,7 +716,7 @@ jobs:
       # usage metrics).
       - uses: ./.github/actions/seed-telemetry-id
 
-      - run: npm ci
+      - run: npm ci --prefer-offline --no-audit --no-fund
       - run: npm run build
 
       - name: Configure AWS credentials
@@ -798,7 +801,7 @@ jobs:
       # usage metrics).
       - uses: ./.github/actions/seed-telemetry-id
 
-      - run: npm ci
+      - run: npm ci --prefer-offline --no-audit --no-fund
       - run: npm run build
 
       - name: Configure AWS credentials
@@ -946,7 +949,7 @@ jobs:
       # usage metrics).
       - uses: ./.github/actions/seed-telemetry-id
 
-      - run: npm ci
+      - run: npm ci --prefer-offline --no-audit --no-fund
       - run: npm run build
 
       - name: Configure AWS credentials
@@ -1022,7 +1025,7 @@ jobs:
       # usage metrics).
       - uses: ./.github/actions/seed-telemetry-id
 
-      - run: npm ci
+      - run: npm ci --prefer-offline --no-audit --no-fund
       - run: npm run build
 
       - name: Install pg_dump 18 (for the run-all baseline E2E)
@@ -1156,7 +1159,7 @@ jobs:
       # usage metrics).
       - uses: ./.github/actions/seed-telemetry-id
 
-      - run: npm ci
+      - run: npm ci --prefer-offline --no-audit --no-fund
       - run: npm run build
 
       - name: Configure AWS credentials
@@ -1235,7 +1238,7 @@ jobs:
           node-version-file: '.nvmrc'
           cache: npm
 
-      - run: npm ci
+      - run: npm ci --prefer-offline --no-audit --no-fund
 
       - run: npm run build
 
