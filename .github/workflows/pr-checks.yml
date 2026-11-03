@@ -80,7 +80,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          # Full history for the merge base, without file contents: a blobless
+          # clone fetches only commits and trees and downloads the blobs the
+          # checkout needs, instead of every blob in the repo's history.
           fetch-depth: 0
+          filter: blob:none
       - id: e2e-slot
         uses: ./.github/actions/e2e-slot
       - id: check
@@ -113,7 +117,11 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
+          # Full history for the merge base, without file contents: a blobless
+          # clone fetches only commits and trees and downloads the blobs the
+          # checkout needs, instead of every blob in the repo's history.
           fetch-depth: 0
+          filter: blob:none
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -231,7 +239,11 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
+          # Full history for the merge base, without file contents: a blobless
+          # clone fetches only commits and trees and downloads the blobs the
+          # checkout needs, instead of every blob in the repo's history.
           fetch-depth: 0
+          filter: blob:none
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -363,7 +375,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
-          fetch-depth: 0
+          # No git history needed: the tests only run on the checked-out tree.
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -442,7 +454,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
-          fetch-depth: 0
+          # No git history needed: the tests only run on the checked-out tree.
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
