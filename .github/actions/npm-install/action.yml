@@ -1,0 +1,60 @@
+name: Install dependencies
+description: >-
+  Sets up Node and installs the workspace's dependencies. Restores node_modules
+  from the cache that node-modules-cache.yml saves on main for this lockfile,
+  Node version, OS and CPU, and runs npm ci only on a miss. A cache saved on
+  the default branch is readable from every PR, whereas one a PR saves is
+  readable only from that PR, so PR runs only read: a miss (a PR that changes
+  the lockfile, or before main has saved one) falls back to npm ci with
+  setup-node's npm download cache. Linux and macOS only (the cache holds the
+  workspace symlinks; Windows jobs keep npm ci).
+inputs:
+  save:
+    description: >-
+      'true' saves node_modules after a miss, and only checks for a hit
+      (without downloading it). For node-modules-cache.yml on main only.
+    required: false
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    # The paths are every node_modules directory npm ci creates (the root and
+    # the workspaces it can't hoist into it). Keep this list and the one in the
+    # save step below in sync.
+    - id: restore
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        key: node-modules-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.nvmrc', 'package-lock.json') }}
+        lookup-only: ${{ inputs.save }}
+        path: |
+          node_modules
+          packages/*/node_modules
+          test-apps/*/node_modules
+          test-apps/*/*/node_modules
+          test-apps/*/packages/*/node_modules
+          scripts/agent-bench/node_modules
+          test-infra/node_modules
+
+    # setup-node's npm download cache only helps npm ci, so restore it only on
+    # a miss (it is ~750 MB).
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version-file: '.nvmrc'
+        cache: ${{ steps.restore.outputs.cache-hit != 'true' && 'npm' || '' }}
+
+    - if: steps.restore.outputs.cache-hit != 'true'
+      shell: bash
+      run: npm ci
+
+    - if: inputs.save == 'true' && steps.restore.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        key: ${{ steps.restore.outputs.cache-primary-key }}
+        path: |
+          node_modules
+          packages/*/node_modules
+          test-apps/*/node_modules
+          test-apps/*/*/node_modules
+          test-apps/*/packages/*/node_modules
+          scripts/agent-bench/node_modules
+          test-infra/node_modules
