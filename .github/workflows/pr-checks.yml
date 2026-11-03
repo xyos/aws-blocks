@@ -64,7 +64,7 @@ jobs:
   # when a job it depends on fails or is cancelled.
   detect-changes:
     name: Detect Changes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     outputs:
       # E2E account for this PR (see .github/actions/e2e-slot).
       e2e-index: ${{ steps.e2e-slot.outputs.index }}
@@ -106,7 +106,7 @@ jobs:
 
   blocks-integrity:
     name: Blocks Package Integrity
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -197,7 +197,7 @@ jobs:
   # script to build would pass every PR check and block the next release.
   release-install-check:
     name: Release Install Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 20
     env:
       HUSKY: '0'
@@ -224,7 +224,7 @@ jobs:
   # build-and-test-local below passes only when all of them succeeded.
   local-build:
     name: Local Build and Checks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -351,7 +351,7 @@ jobs:
   # length, so the matrix has no other axis (unit-test-shard.test.mjs checks).
   local-unit:
     name: Local Unit Tests (shard ${{ matrix.shard }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 60
     strategy:
       # Let every shard finish, so a run reports all failing workspaces.
@@ -435,7 +435,7 @@ jobs:
 
   local-e2e:
     name: Local E2E
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -471,7 +471,7 @@ jobs:
     name: Build, Unit Tests, E2E Local
     needs: [local-build, local-unit, local-e2e]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 5
     steps:
       - name: Check that every part succeeded
@@ -494,7 +494,7 @@ jobs:
     name: E2E Templates
     needs: [build-and-test-local, detect-changes]
     if: contains(fromJSON(needs.detect-changes.outputs.e2e-run), 'templates') && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 60
     steps:
       - name: Check the E2E trailer
@@ -588,7 +588,7 @@ jobs:
       github.event.pull_request.head.repo.full_name == github.repository &&
       ((always() && needs.detect-changes.result != 'success') ||
        (success() && contains(fromJSON(needs.detect-changes.outputs.e2e-run), 'sandbox')))
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 60
     environment: e2e
     env:
@@ -669,7 +669,7 @@ jobs:
     name: E2E VPC Smoke
     needs: [build-and-test-local, detect-changes]
     if: contains(fromJSON(needs.detect-changes.outputs.e2e-run), 'sandbox-vpc') && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 60
     environment: e2e
     # detect-changes doesn't start this job while test-apps/vpc-smoke's
@@ -746,7 +746,7 @@ jobs:
       id-token: write  # assumes the AWS role below
     needs: [build-and-test-local, detect-changes]
     if: contains(fromJSON(needs.detect-changes.outputs.e2e-run), 'compute-smoke') && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 70
     environment: e2e
     # Serialize this suite across PRs: it provisions private-DNS interface
@@ -906,7 +906,7 @@ jobs:
       github.event.pull_request.head.repo.full_name == github.repository &&
       ((always() && needs.detect-changes.result != 'success') ||
        (success() && contains(fromJSON(needs.detect-changes.outputs.e2e-run), 'production')))
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 90
     environment: e2e
     env:
@@ -987,7 +987,7 @@ jobs:
     name: E2E Supabase
     needs: [build-and-test-local, detect-changes]
     if: contains(fromJSON(needs.detect-changes.outputs.e2e-run), 'supabase') && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 10
     environment: e2e
     env:
@@ -1072,7 +1072,7 @@ jobs:
     timeout-minutes: 60
     needs: [build-and-test-local, detect-changes]
     if: contains(fromJSON(needs.detect-changes.outputs.e2e-run), 'hosting') && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     environment: e2e
     strategy:
       fail-fast: false
@@ -1210,7 +1210,7 @@ jobs:
     name: Telemetry E2E
     needs: [build-and-test-local, detect-changes]
     if: contains(fromJSON(needs.detect-changes.outputs.e2e-run), 'telemetry') && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 60
     environment: e2e
     permissions:
@@ -1268,7 +1268,7 @@ jobs:
   build-and-test:
     name: Build and Test
     needs: [detect-changes, blocks-integrity, release-install-check, build-and-test-local, e2e-templates, e2e-templates-windows, e2e-sandbox, e2e-sandbox-vpc, e2e-compute-smoke, e2e-production, e2e-supabase, e2e-hosting, e2e-telemetry]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     if: always()
     steps:
       - name: Check results
