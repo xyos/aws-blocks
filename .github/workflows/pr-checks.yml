@@ -454,7 +454,15 @@ jobs:
   # cancelled or skipped part fails it, and it runs even then so it never
   # reports as skipped (GitHub counts a skipped required check as passing).
   # Keep always(), not !cancelled(): a cancelled run then fails this check
-  # instead of skipping it. Jobs that need it wait for all the parts.
+  # instead of skipping it.
+  #
+  # E2E jobs start before the local tests: the AWS E2E jobs need only Detect
+  # Changes and the E2E Templates jobs only Local Build and Checks (for the
+  # dist-registry artifact), so a PR's E2E phase overlaps the ~7 min local
+  # phase instead of following it. Each job installs and builds on its own
+  # and doesn't use the local jobs' results. Build and Test (the final gate)
+  # still needs this check, so a PR whose local tests fail doesn't pass,
+  # but its E2E jobs still run (and deploy) to the end.
   build-and-test-local:
     name: Build, Unit Tests, E2E Local
     needs: [local-build, local-unit, local-e2e]
@@ -480,7 +488,10 @@ jobs:
 
   e2e-templates:
     name: E2E Templates
-    needs: [build-and-test-local, detect-changes]
+    # Needs only the dist-registry artifact from Local Build and Checks, not
+    # the unit test shards and Local E2E (see "E2E jobs start before the local
+    # tests" at build-and-test-local).
+    needs: [local-build, detect-changes]
     if: contains(fromJSON(needs.detect-changes.outputs.e2e-run), 'templates') && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -522,7 +533,10 @@ jobs:
   # real Windows deploy smoke stays in windows-e2e.yml (scheduled).
   e2e-templates-windows:
     name: E2E Templates (Windows)
-    needs: [build-and-test-local, detect-changes]
+    # Needs only the dist-registry artifact from Local Build and Checks, not
+    # the unit test shards and Local E2E (see "E2E jobs start before the local
+    # tests" at build-and-test-local).
+    needs: [local-build, detect-changes]
     if: contains(fromJSON(needs.detect-changes.outputs.e2e-run), 'templates-windows') && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: windows-latest
     timeout-minutes: 60
@@ -564,7 +578,9 @@ jobs:
       contents: read
       id-token: write  # assumes the AWS role below
     name: E2E Sandbox
-    needs: [build-and-test-local, detect-changes]
+    # Starts with Detect Changes, not after the local tests (see "E2E jobs
+    # start before the local tests" at build-and-test-local).
+    needs: [detect-changes]
     # Required check: see "Check that Detect Changes succeeded" below. Only
     # that branch uses always(); the run branch keeps success() so a failed
     # need still skips the job and a cancelled run (a new push) still cancels
@@ -649,7 +665,9 @@ jobs:
       contents: read
       id-token: write  # assumes the AWS role below
     name: E2E VPC Smoke
-    needs: [build-and-test-local, detect-changes]
+    # Starts with Detect Changes, not after the local tests (see "E2E jobs
+    # start before the local tests" at build-and-test-local).
+    needs: [detect-changes]
     if: contains(fromJSON(needs.detect-changes.outputs.e2e-run), 'sandbox-vpc') && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -723,7 +741,9 @@ jobs:
     permissions:
       contents: read
       id-token: write  # assumes the AWS role below
-    needs: [build-and-test-local, detect-changes]
+    # Starts with Detect Changes, not after the local tests (see "E2E jobs
+    # start before the local tests" at build-and-test-local).
+    needs: [detect-changes]
     if: contains(fromJSON(needs.detect-changes.outputs.e2e-run), 'compute-smoke') && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 70
@@ -873,7 +893,9 @@ jobs:
       contents: read
       id-token: write  # assumes the AWS role below
     name: E2E Production
-    needs: [build-and-test-local, detect-changes]
+    # Starts with Detect Changes, not after the local tests (see "E2E jobs
+    # start before the local tests" at build-and-test-local).
+    needs: [detect-changes]
     # Required check: see "Check that Detect Changes succeeded" below. Only
     # that branch uses always(); the run branch keeps success() so a failed
     # need still skips the job and a cancelled run (a new push) still cancels
@@ -958,7 +980,9 @@ jobs:
       contents: read
       id-token: write  # assumes the AWS role below
     name: E2E Supabase
-    needs: [build-and-test-local, detect-changes]
+    # Starts with Detect Changes, not after the local tests (see "E2E jobs
+    # start before the local tests" at build-and-test-local).
+    needs: [detect-changes]
     if: contains(fromJSON(needs.detect-changes.outputs.e2e-run), 'supabase') && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -1040,7 +1064,9 @@ jobs:
       id-token: write  # assumes the AWS role below
     name: E2E Hosting (${{ matrix.framework }})
     timeout-minutes: 60
-    needs: [build-and-test-local, detect-changes]
+    # Starts with Detect Changes, not after the local tests (see "E2E jobs
+    # start before the local tests" at build-and-test-local).
+    needs: [detect-changes]
     if: contains(fromJSON(needs.detect-changes.outputs.e2e-run), 'hosting') && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     environment: e2e
@@ -1175,7 +1201,9 @@ jobs:
 
   e2e-telemetry:
     name: Telemetry E2E
-    needs: [build-and-test-local, detect-changes]
+    # Starts with Detect Changes, not after the local tests (see "E2E jobs
+    # start before the local tests" at build-and-test-local).
+    needs: [detect-changes]
     if: contains(fromJSON(needs.detect-changes.outputs.e2e-run), 'telemetry') && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 60
