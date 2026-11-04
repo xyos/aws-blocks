@@ -19,11 +19,11 @@ export class EmailClient extends Scope {
 
 // @public
 export const EmailErrors: {
-    readonly SendFailed: "EmailSendFailedException";
-    readonly InvalidInput: "InvalidInputException";
-    readonly DomainNotVerified: "DomainNotVerifiedException";
-    readonly AccountPaused: "AccountSendingPausedException";
-    readonly RateLimited: "RateLimitedException";
+    readonly SendFailed: 'EmailSendFailedException';
+    readonly InvalidInput: 'InvalidInputException';
+    readonly DomainNotVerified: 'DomainNotVerifiedException';
+    readonly AccountPaused: 'AccountSendingPausedException';
+    readonly RateLimited: 'RateLimitedException';
 };
 
 // @public

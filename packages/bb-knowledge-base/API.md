@@ -33,14 +33,14 @@ export class KnowledgeBase extends Scope {
 
 // @public
 export const KnowledgeBaseErrors: {
-    readonly RetrievalFailed: "RetrievalFailedException";
-    readonly NotReady: "KnowledgeBaseNotReadyException";
-    readonly InvalidSource: "InvalidSourceConfigException";
-    readonly InvalidFilter: "InvalidFilterException";
-    readonly ValidationError: "KnowledgeBaseValidationError";
-    readonly BrowserNotSupported: "BrowserNotSupportedException";
-    readonly IngestionFailed: "IngestionFailedException";
-    readonly Timeout: "KnowledgeBaseTimeoutException";
+    readonly RetrievalFailed: 'RetrievalFailedException';
+    readonly NotReady: 'KnowledgeBaseNotReadyException';
+    readonly InvalidSource: 'InvalidSourceConfigException';
+    readonly InvalidFilter: 'InvalidFilterException';
+    readonly ValidationError: 'KnowledgeBaseValidationError';
+    readonly BrowserNotSupported: 'BrowserNotSupportedException';
+    readonly IngestionFailed: 'IngestionFailedException';
+    readonly Timeout: 'KnowledgeBaseTimeoutException';
 };
 
 // @public

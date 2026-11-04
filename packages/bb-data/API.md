@@ -79,15 +79,15 @@ export class Database extends Scope {
 
 // @public
 export const DatabaseErrors: {
-    readonly QueryFailed: "QueryFailedException";
-    readonly ConnectionFailed: "ConnectionFailedException";
-    readonly TransactionFailed: "TransactionFailedException";
-    readonly UniqueConstraintViolation: "UniqueConstraintViolationException";
-    readonly SerializationFailure: "SerializationFailureException";
-    readonly PermissionDenied: "PermissionDeniedException";
-    readonly CheckViolation: "CheckViolationException";
-    readonly NotNullViolation: "NotNullViolationException";
-    readonly ForeignKeyViolation: "ForeignKeyViolationException";
+    readonly QueryFailed: 'QueryFailedException';
+    readonly ConnectionFailed: 'ConnectionFailedException';
+    readonly TransactionFailed: 'TransactionFailedException';
+    readonly UniqueConstraintViolation: 'UniqueConstraintViolationException';
+    readonly SerializationFailure: 'SerializationFailureException';
+    readonly PermissionDenied: 'PermissionDeniedException';
+    readonly CheckViolation: 'CheckViolationException';
+    readonly NotNullViolation: 'NotNullViolationException';
+    readonly ForeignKeyViolation: 'ForeignKeyViolationException';
 };
 
 // @public (undocumented)

@@ -37,9 +37,9 @@ export interface SecretConstructor {
 
 // @public
 export const SecretErrors: {
-    readonly ValidationFailed: "ValidationFailedException";
-    readonly SecretNotFound: "ResourceNotFoundException";
-    readonly NotSupported: "NotSupportedException";
+    readonly ValidationFailed: 'ValidationFailedException';
+    readonly SecretNotFound: 'ResourceNotFoundException';
+    readonly NotSupported: 'NotSupportedException';
 };
 
 // @public

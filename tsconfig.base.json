@@ -9,6 +9,7 @@
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
     "declarationMap": true,
+    "types": ["node"],
     "composite": true,
     "incremental": true
   }

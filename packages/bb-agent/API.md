@@ -52,14 +52,14 @@ export interface AgentConfig<TContext = DefaultToolContext> {
 
 // @public
 export const AgentErrors: {
-    readonly PersistenceRequired: "PersistenceRequiredException";
-    readonly InvalidModelConfig: "InvalidModelConfigException";
-    readonly ModelUnavailable: "ModelUnavailableException";
-    readonly BrowserNotSupported: "BrowserNotSupportedException";
-    readonly StreamFailed: "StreamFailedException";
-    readonly InterruptRequired: "InterruptRequiredException";
-    readonly ConversationNotFound: "ConversationNotFoundException";
-    readonly InvalidUsage: "InvalidUsageException";
+    readonly PersistenceRequired: 'PersistenceRequiredException';
+    readonly InvalidModelConfig: 'InvalidModelConfigException';
+    readonly ModelUnavailable: 'ModelUnavailableException';
+    readonly BrowserNotSupported: 'BrowserNotSupportedException';
+    readonly StreamFailed: 'StreamFailedException';
+    readonly InterruptRequired: 'InterruptRequiredException';
+    readonly ConversationNotFound: 'ConversationNotFoundException';
+    readonly InvalidUsage: 'InvalidUsageException';
 };
 
 // @public (undocumented)
@@ -136,27 +136,27 @@ export interface BedrockGuardrail {
 // @public
 export const BedrockModels: {
     readonly BALANCED: {
-        readonly provider: "bedrock";
+        readonly provider: 'bedrock';
         readonly modelId: "global.anthropic.claude-sonnet-4-6";
     };
     readonly SMART: {
-        readonly provider: "bedrock";
+        readonly provider: 'bedrock';
         readonly modelId: "global.anthropic.claude-opus-4-8";
     };
     readonly FAST: {
-        readonly provider: "bedrock";
+        readonly provider: 'bedrock';
         readonly modelId: "global.anthropic.claude-haiku-4-5-20251001-v1:0";
     };
     readonly DEFAULT: {
-        readonly provider: "bedrock";
+        readonly provider: 'bedrock';
         readonly modelId: "global.anthropic.claude-sonnet-4-6";
     };
     readonly BUDGET: {
-        readonly provider: "bedrock";
+        readonly provider: 'bedrock';
         readonly modelId: "global.anthropic.claude-haiku-4-5-20251001-v1:0";
     };
     readonly MICRO: {
-        readonly provider: "bedrock";
+        readonly provider: 'bedrock';
         readonly modelId: "global.anthropic.claude-haiku-4-5-20251001-v1:0";
     };
 };
@@ -246,34 +246,34 @@ export interface ModelConfig {
 // @public
 export const OllamaModels: {
     readonly XSMALL: {
-        readonly provider: "openai-api";
-        readonly modelId: "llama3.2:3b";
-        readonly endpoint: "http://localhost:11434/v1";
-        readonly apiKey: "ollama";
+        readonly provider: 'openai-api';
+        readonly modelId: 'llama3.2:3b';
+        readonly endpoint: 'http://localhost:11434/v1';
+        readonly apiKey: 'ollama';
     };
     readonly SMALL: {
-        readonly provider: "openai-api";
-        readonly modelId: "llama3.1:8b";
-        readonly endpoint: "http://localhost:11434/v1";
-        readonly apiKey: "ollama";
+        readonly provider: 'openai-api';
+        readonly modelId: 'llama3.1:8b';
+        readonly endpoint: 'http://localhost:11434/v1';
+        readonly apiKey: 'ollama';
     };
     readonly MEDIUM: {
-        readonly provider: "openai-api";
-        readonly modelId: "deepseek-r1:14b";
-        readonly endpoint: "http://localhost:11434/v1";
-        readonly apiKey: "ollama";
+        readonly provider: 'openai-api';
+        readonly modelId: 'deepseek-r1:14b';
+        readonly endpoint: 'http://localhost:11434/v1';
+        readonly apiKey: 'ollama';
     };
     readonly LARGE: {
-        readonly provider: "openai-api";
-        readonly modelId: "llama3.3:70b";
-        readonly endpoint: "http://localhost:11434/v1";
-        readonly apiKey: "ollama";
+        readonly provider: 'openai-api';
+        readonly modelId: 'llama3.3:70b';
+        readonly endpoint: 'http://localhost:11434/v1';
+        readonly apiKey: 'ollama';
     };
     readonly XLARGE: {
-        readonly provider: "openai-api";
-        readonly modelId: "llama4:16x17b";
-        readonly endpoint: "http://localhost:11434/v1";
-        readonly apiKey: "ollama";
+        readonly provider: 'openai-api';
+        readonly modelId: 'llama4:16x17b';
+        readonly endpoint: 'http://localhost:11434/v1';
+        readonly apiKey: 'ollama';
     };
 };
 

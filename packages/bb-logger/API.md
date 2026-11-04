@@ -51,7 +51,7 @@ export class Logger extends Scope implements ChildLogger {
 
 // @public
 export const LoggingErrors: {
-    readonly SerializationFailed: "SerializationFailedException";
+    readonly SerializationFailed: 'SerializationFailedException';
 };
 
 // @public

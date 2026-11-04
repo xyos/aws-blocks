@@ -50,11 +50,11 @@ export class DistributedTable<T, K extends TableKeyConfig<T> = TableKeyConfig<T>
 
 // @public
 export const DistributedTableErrors: {
-    readonly ConditionalCheckFailed: "ConditionalCheckFailedException";
-    readonly ValidationFailed: "ValidationFailedException";
-    readonly InvalidQuery: "InvalidQueryException";
-    readonly ItemTooLarge: "ItemTooLargeException";
-    readonly BatchIncomplete: "BatchIncompleteException";
+    readonly ConditionalCheckFailed: 'ConditionalCheckFailedException';
+    readonly ValidationFailed: 'ValidationFailedException';
+    readonly InvalidQuery: 'InvalidQueryException';
+    readonly ItemTooLarge: 'ItemTooLargeException';
+    readonly BatchIncomplete: 'BatchIncompleteException';
 };
 
 // @public (undocumented)

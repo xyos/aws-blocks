@@ -24,7 +24,7 @@
     "create-blocks-app": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsgo",
     "dev": "tsc --watch",
     "test": "node --test dist/**/*.test.js"
   },

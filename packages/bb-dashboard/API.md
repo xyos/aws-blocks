@@ -17,7 +17,7 @@ export class Dashboard extends Scope {
 
 // @public
 export const DashboardErrors: {
-    readonly InvalidMetricConfig: "InvalidMetricConfigException";
+    readonly InvalidMetricConfig: 'InvalidMetricConfigException';
 };
 
 // @public

@@ -65,10 +65,10 @@ export interface MetricsEmitter {
 
 // @public
 export const MetricsErrors: {
-    readonly InvalidMetricName: "InvalidMetricNameException";
-    readonly InvalidDimensions: "InvalidDimensionsException";
-    readonly BatchTooLarge: "BatchTooLargeException";
-    readonly InvalidNamespace: "InvalidNamespaceException";
+    readonly InvalidMetricName: 'InvalidMetricNameException';
+    readonly InvalidDimensions: 'InvalidDimensionsException';
+    readonly BatchTooLarge: 'BatchTooLargeException';
+    readonly InvalidNamespace: 'InvalidNamespaceException';
 };
 
 // @public

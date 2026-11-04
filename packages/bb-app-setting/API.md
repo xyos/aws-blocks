@@ -27,8 +27,8 @@ export class AppSetting<T = string> extends Scope {
 
 // @public
 export const AppSettingErrors: {
-    readonly ParameterNotFound: "ParameterNotFoundException";
-    readonly ValidationFailed: "ValidationFailedException";
+    readonly ParameterNotFound: 'ParameterNotFoundException';
+    readonly ValidationFailed: 'ValidationFailedException';
 };
 
 // @public
