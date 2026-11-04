@@ -34,6 +34,9 @@ env:
   # Use the 'spec' reporter for node:test — produces a clean, hierarchical
   # pass/fail summary instead of verbose TAP output with per-test YAML blocks.
   NODE_OPTIONS: '--test-reporter=spec'
+  # puppeteer (a dependency of the local-only tech-design PDF script) downloads
+  # ~300 MB of Chrome in its postinstall on every npm ci; no CI job uses it.
+  PUPPETEER_SKIP_DOWNLOAD: 'true'
 
 jobs:
   # Picks the E2E jobs to run. By default that is every E2E job when the PR
@@ -115,12 +118,9 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
-
-      - run: npm ci
+      # node_modules from main's cache for this lockfile, or npm ci on a miss
+      # (.github/actions/npm-install).
+      - uses: ./.github/actions/npm-install
 
       - name: Sync block docs (prebuild step)
         run: node scripts/gen-block-docs.mjs
@@ -212,7 +212,7 @@ jobs:
           node-version-file: '.nvmrc'
           cache: npm
 
-      - run: npm ci --ignore-scripts
+      - run: npm ci --ignore-scripts --prefer-offline --no-audit --no-fund
 
       - name: Build
         run: npm run build
@@ -233,17 +233,14 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
-
       # Pin a fixed Blocks CLI telemetry installation ID for CI e2e runs so this
       # traffic is consistent and identifiable (and can be excluded from product
       # usage metrics).
       - uses: ./.github/actions/seed-telemetry-id
 
-      - run: npm ci
+      # node_modules from main's cache for this lockfile, or npm ci on a miss
+      # (.github/actions/npm-install).
+      - uses: ./.github/actions/npm-install
 
       - name: Lint (advisory — annotations only, non-blocking)
         run: npm run lint
@@ -365,17 +362,14 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
-
       # Pin a fixed Blocks CLI telemetry installation ID for CI e2e runs so this
       # traffic is consistent and identifiable (and can be excluded from product
       # usage metrics).
       - uses: ./.github/actions/seed-telemetry-id
 
-      - run: npm ci
+      # node_modules from main's cache for this lockfile, or npm ci on a miss
+      # (.github/actions/npm-install).
+      - uses: ./.github/actions/npm-install
 
       - name: Build
         run: npm run build
@@ -444,17 +438,14 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
-
       # Pin a fixed Blocks CLI telemetry installation ID for CI e2e runs so this
       # traffic is consistent and identifiable (and can be excluded from product
       # usage metrics).
       - uses: ./.github/actions/seed-telemetry-id
 
-      - run: npm ci
+      # node_modules from main's cache for this lockfile, or npm ci on a miss
+      # (.github/actions/npm-install).
+      - uses: ./.github/actions/npm-install
 
       - name: Build
         run: npm run build
@@ -466,7 +457,15 @@ jobs:
   # cancelled or skipped part fails it, and it runs even then so it never
   # reports as skipped (GitHub counts a skipped required check as passing).
   # Keep always(), not !cancelled(): a cancelled run then fails this check
-  # instead of skipping it. Jobs that need it wait for all the parts.
+  # instead of skipping it.
+  #
+  # E2E jobs start before the local tests: the AWS E2E jobs need only Detect
+  # Changes and the E2E Templates jobs only Local Build and Checks (for the
+  # dist-registry artifact), so a PR's E2E phase overlaps the ~7 min local
+  # phase instead of following it. Each job installs and builds on its own
+  # and doesn't use the local jobs' results. Build and Test (the final gate)
+  # still needs this check, so a PR whose local tests fail doesn't pass,
+  # but its E2E jobs still run (and deploy) to the end.
   build-and-test-local:
     name: Build, Unit Tests, E2E Local
     needs: [local-build, local-unit, local-e2e]
@@ -492,7 +491,10 @@ jobs:
 
   e2e-templates:
     name: E2E Templates
-    needs: [build-and-test-local, detect-changes]
+    # Needs only the dist-registry artifact from Local Build and Checks, not
+    # the unit test shards and Local E2E (see "E2E jobs start before the local
+    # tests" below).
+    needs: [local-build, detect-changes]
     if: contains(fromJSON(needs.detect-changes.outputs.e2e-run), 'templates') && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -508,17 +510,17 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
 
+      # No npm ci: the driver (scripts/ci/templates-e2e.mjs) and the local
+      # registry it serves dist-registry/ from use only Node built-ins, and each
+      # scaffolded app installs its own dependencies from that registry.
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: '.nvmrc'
-          cache: npm
 
       # Pin a fixed Blocks CLI telemetry installation ID for CI e2e runs so this
       # traffic is consistent and identifiable (and can be excluded from product
       # usage metrics).
       - uses: ./.github/actions/seed-telemetry-id
-
-      - run: npm ci
 
       - name: Download registry artifact
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
@@ -537,7 +539,10 @@ jobs:
   # real Windows deploy smoke stays in windows-e2e.yml (scheduled).
   e2e-templates-windows:
     name: E2E Templates (Windows)
-    needs: [build-and-test-local, detect-changes]
+    # Needs only the dist-registry artifact from Local Build and Checks, not
+    # the unit test shards and Local E2E (see "E2E jobs start before the local
+    # tests" below).
+    needs: [local-build, detect-changes]
     if: contains(fromJSON(needs.detect-changes.outputs.e2e-run), 'templates-windows') && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: windows-latest
     timeout-minutes: 60
@@ -553,17 +558,17 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
 
+      # No npm ci: the driver (scripts/ci/templates-e2e.mjs) and the local
+      # registry it serves dist-registry/ from use only Node built-ins, and each
+      # scaffolded app installs its own dependencies from that registry.
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: '.nvmrc'
-          cache: npm
 
       # Pin a fixed Blocks CLI telemetry installation ID for CI e2e runs so this
       # traffic is consistent and identifiable (and can be excluded from product
       # usage metrics).
       - uses: ./.github/actions/seed-telemetry-id
-
-      - run: npm ci
 
       - name: Download registry artifact
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
@@ -579,7 +584,9 @@ jobs:
       contents: read
       id-token: write  # assumes the AWS role below
     name: E2E Sandbox
-    needs: [build-and-test-local, detect-changes]
+    # Starts with Detect Changes, not after the local tests (see "E2E jobs
+    # start before the local tests" below).
+    needs: [detect-changes]
     # Required check: see "Check that Detect Changes succeeded" below. Only
     # that branch uses always(); the run branch keeps success() so a failed
     # need still skips the job and a cancelled run (a new push) still cancels
@@ -618,17 +625,14 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
 
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
-
       # Pin a fixed Blocks CLI telemetry installation ID for CI e2e runs so this
       # traffic is consistent and identifiable (and can be excluded from product
       # usage metrics).
       - uses: ./.github/actions/seed-telemetry-id
 
-      - run: npm ci
+      # node_modules from main's cache for this lockfile, or npm ci on a miss
+      # (.github/actions/npm-install).
+      - uses: ./.github/actions/npm-install
       - run: npm run build
 
       - name: Configure AWS credentials
@@ -667,7 +671,9 @@ jobs:
       contents: read
       id-token: write  # assumes the AWS role below
     name: E2E VPC Smoke
-    needs: [build-and-test-local, detect-changes]
+    # Starts with Detect Changes, not after the local tests (see "E2E jobs
+    # start before the local tests" below).
+    needs: [detect-changes]
     if: contains(fromJSON(needs.detect-changes.outputs.e2e-run), 'sandbox-vpc') && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -703,17 +709,14 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
 
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
-
       # Pin a fixed Blocks CLI telemetry installation ID for CI e2e runs so this
       # traffic is consistent and identifiable (and can be excluded from product
       # usage metrics).
       - uses: ./.github/actions/seed-telemetry-id
 
-      - run: npm ci
+      # node_modules from main's cache for this lockfile, or npm ci on a miss
+      # (.github/actions/npm-install).
+      - uses: ./.github/actions/npm-install
       - run: npm run build
 
       - name: Configure AWS credentials
@@ -744,7 +747,9 @@ jobs:
     permissions:
       contents: read
       id-token: write  # assumes the AWS role below
-    needs: [build-and-test-local, detect-changes]
+    # Starts with Detect Changes, not after the local tests (see "E2E jobs
+    # start before the local tests" below).
+    needs: [detect-changes]
     if: contains(fromJSON(needs.detect-changes.outputs.e2e-run), 'compute-smoke') && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 70
@@ -788,17 +793,14 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
 
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
-
       # Pin a fixed Blocks CLI telemetry installation ID for CI e2e runs so this
       # traffic is consistent and identifiable (and can be excluded from product
       # usage metrics).
       - uses: ./.github/actions/seed-telemetry-id
 
-      - run: npm ci
+      # node_modules from main's cache for this lockfile, or npm ci on a miss
+      # (.github/actions/npm-install).
+      - uses: ./.github/actions/npm-install
       - run: npm run build
 
       - name: Configure AWS credentials
@@ -897,7 +899,9 @@ jobs:
       contents: read
       id-token: write  # assumes the AWS role below
     name: E2E Production
-    needs: [build-and-test-local, detect-changes]
+    # Starts with Detect Changes, not after the local tests (see "E2E jobs
+    # start before the local tests" below).
+    needs: [detect-changes]
     # Required check: see "Check that Detect Changes succeeded" below. Only
     # that branch uses always(); the run branch keeps success() so a failed
     # need still skips the job and a cancelled run (a new push) still cancels
@@ -936,17 +940,14 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
 
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
-
       # Pin a fixed Blocks CLI telemetry installation ID for CI e2e runs so this
       # traffic is consistent and identifiable (and can be excluded from product
       # usage metrics).
       - uses: ./.github/actions/seed-telemetry-id
 
-      - run: npm ci
+      # node_modules from main's cache for this lockfile, or npm ci on a miss
+      # (.github/actions/npm-install).
+      - uses: ./.github/actions/npm-install
       - run: npm run build
 
       - name: Configure AWS credentials
@@ -985,7 +986,9 @@ jobs:
       contents: read
       id-token: write  # assumes the AWS role below
     name: E2E Supabase
-    needs: [build-and-test-local, detect-changes]
+    # Starts with Detect Changes, not after the local tests (see "E2E jobs
+    # start before the local tests" below).
+    needs: [detect-changes]
     if: contains(fromJSON(needs.detect-changes.outputs.e2e-run), 'supabase') && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -1012,17 +1015,14 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
 
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
-
       # Pin a fixed Blocks CLI telemetry installation ID for CI e2e runs so this
       # traffic is consistent and identifiable (and can be excluded from product
       # usage metrics).
       - uses: ./.github/actions/seed-telemetry-id
 
-      - run: npm ci
+      # node_modules from main's cache for this lockfile, or npm ci on a miss
+      # (.github/actions/npm-install).
+      - uses: ./.github/actions/npm-install
       - run: npm run build
 
       - name: Install pg_dump 18 (for the run-all baseline E2E)
@@ -1070,7 +1070,9 @@ jobs:
       id-token: write  # assumes the AWS role below
     name: E2E Hosting (${{ matrix.framework }})
     timeout-minutes: 60
-    needs: [build-and-test-local, detect-changes]
+    # Starts with Detect Changes, not after the local tests (see "E2E jobs
+    # start before the local tests" below).
+    needs: [detect-changes]
     if: contains(fromJSON(needs.detect-changes.outputs.e2e-run), 'hosting') && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     environment: e2e
@@ -1146,17 +1148,14 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
 
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
-
       # Pin a fixed Blocks CLI telemetry installation ID for CI e2e runs so this
       # traffic is consistent and identifiable (and can be excluded from product
       # usage metrics).
       - uses: ./.github/actions/seed-telemetry-id
 
-      - run: npm ci
+      # node_modules from main's cache for this lockfile, or npm ci on a miss
+      # (.github/actions/npm-install).
+      - uses: ./.github/actions/npm-install
       - run: npm run build
 
       - name: Configure AWS credentials
@@ -1208,7 +1207,9 @@ jobs:
 
   e2e-telemetry:
     name: Telemetry E2E
-    needs: [build-and-test-local, detect-changes]
+    # Starts with Detect Changes, not after the local tests (see "E2E jobs
+    # start before the local tests" below).
+    needs: [detect-changes]
     if: contains(fromJSON(needs.detect-changes.outputs.e2e-run), 'telemetry') && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -1230,12 +1231,9 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
 
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
-
-      - run: npm ci
+      # node_modules from main's cache for this lockfile, or npm ci on a miss
+      # (.github/actions/npm-install).
+      - uses: ./.github/actions/npm-install
 
       - run: npm run build
 

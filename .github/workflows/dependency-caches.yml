@@ -1,0 +1,67 @@
+name: Dependency caches
+
+# Saves the dependency caches PR Checks restores, on main, for the current
+# lockfile: node_modules for the Linux jobs (.github/actions/npm-install) and
+# setup-node's npm download cache for the Windows job. A cache saved on the
+# default branch is readable from every PR; one a PR saves is readable only
+# from that PR, so PRs never save node_modules. Runs on every push: when an
+# entry for this lockfile already exists it is only looked up (node_modules)
+# or restored (Windows npm cache), and when it was evicted it is saved again.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # As in pr-checks.yml: no CI job uses puppeteer's Chrome.
+  PUPPETEER_SKIP_DOWNLOAD: 'true'
+
+concurrency:
+  group: dependency-caches-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  save:
+    name: Save node_modules (${{ matrix.runner }})
+    strategy:
+      matrix:
+        # The runners PR Checks restores it on.
+        runner: [ubuntu-latest, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/npm-install
+        with:
+          save: 'true'
+
+  # Windows jobs (E2E Templates (Windows)) keep npm ci, with setup-node's npm
+  # download cache. Without an entry on main, each PR's first Windows run
+  # misses and saves its own ~650 MB entry, which pushes the shared 10 GB cache
+  # into evicting the Linux entries. This saves one on main for PRs to read.
+  windows-npm:
+    name: Save the npm cache (windows-latest)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Restores the entry when it exists (no save then), else saves it after
+      # npm ci fills the npm cache.
+      - id: node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+
+      - if: steps.node.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit --no-fund
