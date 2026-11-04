@@ -9,7 +9,7 @@ name: node_modules cache
 
 on:
   push:
-    branches: [main]
+    branches: [ciexp-final-base]
   workflow_dispatch:
 
 permissions:
