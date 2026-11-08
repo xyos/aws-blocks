@@ -1,6 +1,8 @@
 name: 'Dependency Review'
 on:
   pull_request:
+    # ciexp (fork-only): PRs in the CI-speed fork target ciexp-base, so restrict to main.
+    branches: [main]
 
 concurrency:
   group: dependency-review-${{ github.event.pull_request.number || github.ref }}

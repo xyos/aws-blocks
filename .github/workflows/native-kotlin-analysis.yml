@@ -6,6 +6,8 @@ name: Native Kotlin Analysis
 
 on:
   pull_request:
+    # ciexp (fork-only): PRs in the CI-speed fork target ciexp-base, so restrict to main.
+    branches: [main]
     paths:
       - 'native/kotlin/**'
       - 'native/codegen-fixtures/**'
