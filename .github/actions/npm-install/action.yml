@@ -8,8 +8,7 @@ description: >-
   node_modules: a miss (a PR that changes the lockfile or a package.json, or
   before main has saved one) falls back to npm ci with setup-node's npm
   download cache, which setup-node still saves for that PR when its own key
-  misses. Linux and macOS only (the cache holds the workspace symlinks;
-  Windows jobs keep npm ci).
+  misses. Linux and macOS only (the cache holds the workspace symlinks).
 inputs:
   save:
     description: >-
