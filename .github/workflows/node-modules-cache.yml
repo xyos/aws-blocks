@@ -9,7 +9,8 @@ name: node_modules cache
 
 on:
   push:
-    branches: [main]
+    # ciexp (fork-only): also the experiment PRs' base branch.
+    branches: [main, ciexp2-cand-base]
   workflow_dispatch:
 
 permissions:
