@@ -82,3 +82,4 @@ export {
 	unlockRouteRegistry,
 } from './raw-route.js';
 export { RawRoute } from './raw-route.mock.js';
+// ciexp: trivial change so detect-changes selects the E2E lanes.
