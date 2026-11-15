@@ -9,7 +9,7 @@ Confirm every detail in `node_modules/@aws-blocks/blocks/docs/bb-kv-store/README
 - `KVStore` from `@aws-blocks/blocks` is one DynamoDB table with a string key and one JSON value per key. It is a key-value store, not a Redis server: it has no lists, hashes, sets, sorted sets, counters, pub/sub, scripts, or multi-key transactions.
 - Methods: `get(key, options?)`, `put(key, value, options?)`, `delete(key, conditions?)`, `scan(options?)`. `put` and `delete` return nothing.
 - Values are serialized with `JSON.stringify`. The value type is `string` by default; `new KVStore<Session>(scope, 'sessions')` stores objects; `{ schema }` (Zod, Valibot, ArkType) also validates each `put`.
-- One item holds at most 400 KB. A larger value fails with `KVStoreErrors.ItemTooLarge`. Store large payloads in `FileBucket` (`cdk-blocks migrate guide file-uploads`).
+- One item holds at most 400 KB. A larger value fails with `KVStoreErrors.ItemTooLarge`. Store large payloads in `FileBucket` (`cdk-blocks blockify-app guide file-uploads`).
 - `scan()` returns `AsyncIterable<{ key, value }>` over every item. It has no prefix or pattern filter and it reads the whole table, so keep it out of request paths.
 - Use one store per kind of entity (`sessions`, `cache`, `rate`), each with its own value type.
 
@@ -54,7 +54,7 @@ async function incr(key: string): Promise<number> {
 }
 ```
 
-- For a counter that many requests update at once, or one that must be exact, use `Database`: `UPDATE counters SET n = n + 1 WHERE id = ${id} RETURNING n` is atomic (`cdk-blocks migrate guide database`). `DistributedTable` has no partial update either.
+- For a counter that many requests update at once, or one that must be exact, use `Database`: `UPDATE counters SET n = n + 1 WHERE id = ${id} RETURNING n` is atomic (`cdk-blocks blockify-app guide database`). `DistributedTable` has no partial update either.
 
 ## Redis call mapping
 
@@ -73,7 +73,7 @@ async function incr(key: string): Promise<number> {
 | `hset`, `hget`, `hgetall` | One object per key in `KVStore<T>` (read, change, `put` with `ifValueEquals`), or a `DistributedTable` with the hash name as partition key and the field as sort key |
 | `sadd`, `sismember`, `smembers` | `DistributedTable`: set name as partition key, member as sort key; `put`, `get`, `query` |
 | `lpush`, `rpush`, `lrange` | `DistributedTable` with a sortable sort key (timestamp plus id) and `query({ order, limit })`, or a `Database` table |
-| `lpop`, `rpop`, `brpop` used as a job queue | `AsyncJob` (`cdk-blocks migrate guide jobs`) |
+| `lpop`, `rpop`, `brpop` used as a job queue | `AsyncJob` (`cdk-blocks blockify-app guide jobs`) |
 | `zadd`, `zrange`, `zrangebyscore`, `zincrby` | No key-value equivalent. A `Database` table with an index on the score |
 | `keys`, `scan` with a pattern | `store.scan()` and filter in code (full table read), or a `DistributedTable` query with `beginsWith` on the sort key |
 | `publish`, `subscribe` | `Realtime` for server-to-browser push (`rt.publish(namespace, channel, data)`, best-effort). Not a server-to-server bus |
@@ -82,7 +82,7 @@ async function incr(key: string): Promise<number> {
 
 - `DistributedTable` supports TTL through `ttl: '<field>'` (a schema field with Unix epoch seconds). Its reads do not filter expired items, so compare the field with the current time on every read. `put` accepts `ifNotExists` or `ifFieldEquals`, `delete` accepts `ifExists` or `ifFieldEquals`, and there is no `update()`: a change is `get`, then `put` of the full item.
 - `Database` has no TTL. Store an `expires_at` column, add `WHERE expires_at > now()` to every read, and delete old rows from a `CronJob`.
-- When the app depends on an operation marked "No equivalent" and a `Database` rewrite changes its behavior, keep the hosted Redis. Move its URL and token out of `.env` into a secret (`cdk-blocks migrate guide secrets`), create the client inside the backend handler, and record the dependency in MIGRATION.md under After deploy.
+- When the app depends on an operation marked "No equivalent" and a `Database` rewrite changes its behavior, keep the hosted Redis. Move its URL and token out of `.env` into a secret (`cdk-blocks blockify-app guide secrets`), create the client inside the backend handler, and record the dependency in MIGRATION.md under After deploy.
 
 ## Where the code runs
 

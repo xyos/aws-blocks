@@ -91,12 +91,12 @@ curl -s -X POST "$URL/aws-blocks/api" -H 'Content-Type: application/json' \
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| `Frontend build failed: <command>` | `buildCommand` failed in the deploy shell: a tool missing from `PATH`, or a build-time env value absent | Read the build output above the line; see `cdk-blocks migrate guide package-managers` |
+| `Frontend build failed: <command>` | `buildCommand` failed in the deploy shell: a tool missing from `PATH`, or a build-time env value absent | Read the build output above the line; see `cdk-blocks blockify-app guide package-managers` |
 | `MultipleLockFilesFound` | Two lockfiles in the project root | Keep one lockfile |
 | Deployed config body is `{"_placeholder":true}` | The build-time stub was not replaced | Run the deploy again |
-| Local checks pass, deployed calls fail with access denied, a 504 after 29 seconds, or a CORS error on upload | Mocks do not enforce IAM, API Gateway limits or bucket CORS | See `cdk-blocks migrate guide aws-limits` and `file-uploads` |
-| Sign-in returns to the old origin or fails on callback | The identity provider does not list the new origin | Add the deployed URL at the provider; see `cdk-blocks migrate guide auth` |
-| A model call fails with a use-case or AWS Marketplace message | One-time Amazon Bedrock account steps | See `cdk-blocks migrate guide ai` |
+| Local checks pass, deployed calls fail with access denied, a 504 after 29 seconds, or a CORS error on upload | Mocks do not enforce IAM, API Gateway limits or bucket CORS | See `cdk-blocks blockify-app guide aws-limits` and `file-uploads` |
+| Sign-in returns to the old origin or fails on callback | The identity provider does not list the new origin | Add the deployed URL at the provider; see `cdk-blocks blockify-app guide auth` |
+| A model call fails with a use-case or AWS Marketplace message | One-time Amazon Bedrock account steps | See `cdk-blocks blockify-app guide ai` |
 | `cdk-blocks destroy` exits 2 | No terminal and no `--yes` | Ask the user, then pass `--yes` |
 
 More: `node_modules/@aws-blocks/blocks/docs/TROUBLESHOOTING.md`.

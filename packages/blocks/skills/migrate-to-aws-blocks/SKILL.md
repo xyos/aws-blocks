@@ -16,7 +16,7 @@ You move an existing web app onto AWS Blocks in place: the same repository and t
 1. In the root of the app, run the playbook command. It reads the repository, changes nothing, and needs no installed dependencies and no AWS account:
 
    ```bash
-   npx -y -p @aws-blocks/blocks cdk-blocks migrate playbook
+   npx -y -p @aws-blocks/blocks cdk-blocks blockify-app playbook
    ```
 
    It prints what it detected (framework, rendering mode, package manager, and the data, sign-in, storage, job and secret surfaces, each with the file that shows it), the procedure with the sections that apply to this app, and the guides to read first. Follow that output: it comes from the version of AWS Blocks the app will install, so it is the current text when it differs from this skill's copy.
@@ -27,9 +27,9 @@ You move an existing web app onto AWS Blocks in place: the same repository and t
 
 Once the scaffold task has installed `@aws-blocks/blocks` in the app, run the commands as `npx --no -- cdk-blocks …`:
 
-- `cdk-blocks migrate playbook`: the procedure for this app. Run it again after a long pause to re-read it.
-- `cdk-blocks migrate guide <name>...`: one or more of the guides below, in full. Without a name it lists them.
-- `cdk-blocks migrate check`: checks the migrated files against the playbook's rules. Run it in the validate task and fix what it reports.
+- `cdk-blocks blockify-app playbook`: the procedure for this app. Run it again after a long pause to re-read it.
+- `cdk-blocks blockify-app guide <name>...`: one or more of the guides below, in full. Without a name it lists them.
+- `cdk-blocks blockify-app check`: checks the migrated files against the playbook's rules. With `--server`, after `cdk synth`, it also starts the server function that the deploy would upload. Run it in the validate task and fix what it reports.
 
 ## Guides
 

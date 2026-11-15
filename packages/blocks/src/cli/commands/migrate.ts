@@ -1017,17 +1017,7 @@ function refusal(ctx: Context, error: unknown): unknown {
 }
 
 export async function migrate(ctx: Context, input: CommandInput): Promise<number> {
-	const root = ctx.findRoot();
-	if (!root) {
-		throw new CliError(
-			`not inside an AWS Blocks app: no package.json with an aws-blocks/ directory at or above ${ctx.startDir}.`,
-			{
-				hint:
-					'run the command from your app directory, or pass -C <app-dir>; to move an app that is not on AWS Blocks ' +
-					'yet onto it, run "cdk-blocks migrate playbook"',
-			},
-		);
-	}
+	const root = ctx.requireRoot();
 	const dryRun = input.flags['dry-run'] === true;
 	let git: GitView;
 	try {

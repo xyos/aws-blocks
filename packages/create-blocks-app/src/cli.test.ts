@@ -443,7 +443,7 @@ describe('create-blocks-app auto-detection', () => {
       assert.match(result.stdout, /Created aws-blocks/);
       assert.match(readFileSync(join(tmpDir, '.gitignore'), 'utf-8'), /^\.bb-data\/$/m);
       // The last line names the playbook: a caller that reads only the end of the output still finds it.
-      assert.match(result.stdout.trimEnd().split('\n').at(-1) ?? '', /cdk-blocks migrate playbook$/);
+      assert.match(result.stdout.trimEnd().split('\n').at(-1) ?? '', /cdk-blocks blockify-app playbook$/);
     } finally {
       rmSync(tmpDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
     }

@@ -5,7 +5,7 @@
 ## Decide per call
 
 - Convert general-purpose text generation (chat completion, summarizing, classification, extraction, JSON output) to Amazon Bedrock. The call then authenticates with the function's IAM role, so the provider key leaves the app.
-- Keep a provider whose value Bedrock does not reproduce for this app: web search, speech, a specific image or video model, a fine-tuned model. Leave the call as it is and move its key to a `Secret` (see `cdk-blocks migrate guide secrets`). Record the key in `MIGRATION.md` under After deploy.
+- Keep a provider whose value Bedrock does not reproduce for this app: web search, speech, a specific image or video model, a fine-tuned model. Leave the call as it is and move its key to a `Secret` (see `cdk-blocks blockify-app guide secrets`). Record the key in `MIGRATION.md` under After deploy.
 - When the user did not ask for a provider change, keeping every provider with its key in a `Secret` is also a valid migration. Record the choice in `MIGRATION.md`.
 - After a conversion, delete the converted provider's key from code and env files.
 
@@ -63,7 +63,7 @@ const text = res.output?.message?.content?.find((c) => c.text)?.text ?? '';
 
 - An API method and a `RawRoute` return one buffered response. `ctx.response.send(body)` sends a string as it is and serializes any other value with `JSON.stringify`, on AWS and in the dev server. A `ReadableStream` passed to `send` arrives as `{}`.
 - API Gateway ends a request after 29 seconds and caps the payload at 10 MB. Local mocks do not apply AWS limits, so a slow completion can pass locally and time out on AWS.
-- For a completion that can exceed 29 seconds, return a job id from an `AsyncJob` (see `cdk-blocks migrate guide jobs`) or use the `Agent` block. For token-by-token output, use the `Agent` block.
+- For a completion that can exceed 29 seconds, return a job id from an `AsyncJob` (see `cdk-blocks blockify-app guide jobs`) or use the `Agent` block. For token-by-token output, use the `Agent` block.
 
 ## Agent block
 
@@ -93,7 +93,7 @@ General knowledge about the AI SDK, not verified against AWS Blocks sources; con
 
 - `generateText` / `generateObject` with `@ai-sdk/amazon-bedrock` work inside an `ApiNamespace` method: they return a complete value. The provider reads AWS credentials from the environment, which the Lambda function sets. Add the IAM grant above.
 - `streamText` with `useChat` needs a streaming HTTP response, which an API method and a `RawRoute` cannot give. Two options:
-  - Keep the Next.js route handler. With the default CloudFront door, Hosting serves Next.js through a streaming server function. Swap the provider to `@ai-sdk/amazon-bedrock` and grant Bedrock to the SSR function: keep the construct (`const hosting = new Hosting(…)`) and call `hosting.ssrFunction?.addToRolePolicy(statement)` (with `compute.type: 'web-function'`: `hosting.ssrWebFunction?.addToRolePolicy(statement)`). The SSR function timeout is `compute.timeout` on `Hosting`. See `cdk-blocks migrate guide nextjs`.
+  - Keep the Next.js route handler. With the default CloudFront door, Hosting serves Next.js through a streaming server function. Swap the provider to `@ai-sdk/amazon-bedrock` and grant Bedrock to the SSR function: keep the construct (`const hosting = new Hosting(…)`) and call `hosting.ssrFunction?.addToRolePolicy(statement)` (with `compute.type: 'web-function'`: `hosting.ssrWebFunction?.addToRolePolicy(statement)`). The SSR function timeout is `compute.timeout` on `Hosting`. See `cdk-blocks blockify-app guide nextjs`.
   - Replace `useChat` with the `Agent` block and `createChat`. Choose this for an SPA, where no SSR function exists.
 - `sandbox preview` serves the frontend through API Gateway with buffered server responses of about 6 MB, so a streaming route is verified on a production deploy only.
 
@@ -105,4 +105,4 @@ Under Before deploy, kind `account`. These steps need no deployed stack, and mod
 - Models sold through AWS Marketplace (all Anthropic models): invoke the model once as a principal that has `aws-marketplace:Subscribe`, `aws-marketplace:Unsubscribe` and `aws-marketplace:ViewSubscriptions`, for example from the console playground. Until then the app's role gets "not authorized to perform the required AWS Marketplace actions".
 - With the `Agent` block these refusals surface as `AgentErrors.ModelUnavailable`; the agent's health check still passes.
 
-Under After deploy: the key of every provider that was kept, as `cdk-blocks migrate guide secrets` says. In the task: the model id each call uses.
+Under After deploy: the key of every provider that was kept, as `cdk-blocks blockify-app guide secrets` says. In the task: the model id each call uses.

@@ -17,8 +17,8 @@
 
 - This holds for every framework whose server `Hosting` runs: Next.js route handlers and `pages/api`, Nuxt `server/api` and `server/routes`, SvelteKit `+server` files and form actions, Astro endpoints. A route that only sets a cookie, redirects, or reads a file that ships with the app needs no Building Block: leave it where it is, also when another route of the same app moves.
 - It runs in the SSR function that `Hosting` creates. That function receives `BLOCKS_API_URL` and the Hosting `environment` values. Building Block permissions go to the shared execution role of the Blocks computes, so a kept route cannot use a block instance.
-- `import { api } from 'aws-blocks'` in a route handler resolves to the generated client. The route reaches Blocks data through `api.method()` calls; wrap them in `withAuth` when the method needs the signed-in user (`cdk-blocks migrate guide client-wiring`).
-- Secrets it reads move to Hosting values (`cdk-blocks migrate guide secrets`).
+- `import { api } from 'aws-blocks'` in a route handler resolves to the generated client. The route reaches Blocks data through `api.method()` calls; wrap them in `withAuth` when the method needs the signed-in user (`cdk-blocks blockify-app guide client-wiring`).
+- Secrets it reads move to Hosting values (`cdk-blocks blockify-app guide secrets`).
 - Do not declare a `RawRoute` on the same path: on AWS the request then goes to the Blocks API and the framework route is unreachable.
 
 ## ApiNamespace method
@@ -38,12 +38,12 @@ export const orders = new ApiNamespace(scope, 'orders', (context) => ({
 ```
 
 - The frontend calls `orders.get(id)`: `<export name>.<method>`. The second constructor argument is only a label. For `orders.create()`, export an `orders` namespace.
-- Transport: `POST /aws-blocks/api/<export name>` with a JSON-RPC 2.0 body. Arguments are positional. Arguments and results are JSON: return plain objects, strings and numbers; a `Date` arrives as a string; files go through `FileBucket` (`cdk-blocks migrate guide file-uploads`).
-- Every method is a public endpoint. A method is gated only by the check you write as its first statement (`await auth.requireAuth(context)`, see `cdk-blocks migrate guide auth`). Local dev applies no gate either, so a missing check passes every local test. Port each middleware-based guard explicitly.
+- Transport: `POST /aws-blocks/api/<export name>` with a JSON-RPC 2.0 body. Arguments are positional. Arguments and results are JSON: return plain objects, strings and numbers; a `Date` arrives as a string; files go through `FileBucket` (`cdk-blocks blockify-app guide file-uploads`).
+- Every method is a public endpoint. A method is gated only by the check you write as its first statement (`await auth.requireAuth(context)`, see `cdk-blocks blockify-app guide auth`). Local dev applies no gate either, so a missing check passes every local test. Port each middleware-based guard explicitly.
 - Errors: `throw new ApiError(message, status, { name?, retriable? })`. The response is HTTP 200 with a JSON-RPC error whose `code` is `status`; the client rejects with an `ApiError` that has the same `status`, `name` and `message`. Any other throw (a bare `Error`, a driver exception) reaches the client as status 500 with message `Internal error`; the real error is in the server log. An error thrown by a Building Block keeps its name and message; it keeps its status when it has one, and is 500 otherwise.
 - `{ httpErrorStatus: true }` as the fourth argument answers a 4xx `ApiError` with that HTTP status. `Hosting` fails synth (`HttpErrorStatusErrorPagesError`) when the distribution maps 403 or 404 to an error page; leave the option off unless the user needs status-based metrics.
 - Request data: `context.request.headers.get('x-forwarded-for')`. Port `req.headers[...]`, Next.js `headers()` and cookie reads to it. A value the old server read from the request (IP, user agent, an auth token) stays a server-side read; as a method argument the caller could supply any value. `context.request.params` is `{}` for methods.
-- Limits: body 10 MiB, locally and on AWS (larger answers 413, name `PayloadTooLarge`). On AWS a call has about 29 seconds; the handler answers 504 at 28 seconds, and the local server sets no deadline. Longer work goes to `AsyncJob` (`cdk-blocks migrate guide jobs`, `cdk-blocks migrate guide aws-limits`).
+- Limits: body 10 MiB, locally and on AWS (larger answers 413, name `PayloadTooLarge`). On AWS a call has about 29 seconds; the handler answers 504 at 28 seconds, and the local server sets no deadline. Longer work goes to `AsyncJob` (`cdk-blocks blockify-app guide jobs`, `cdk-blocks blockify-app guide aws-limits`).
 - A Node caller resends a call once when its connection closes before the response headers arrive. Keep state-changing methods safe to repeat.
 
 ## RawRoute
@@ -67,7 +67,7 @@ new RawRoute(scope, 'stripe-webhook', {
 - Path forms: exact (`/health`); `{name}` captures one segment and is URL-decoded (`ctx.request.params.id`); a trailing `*` captures the rest as `params['*']`, not decoded, so validate it. One `*`, last segment only. A trailing slash on the request is accepted.
 - Reserved: `/`, `/aws-blocks`, `/aws-blocks/api` and everything under it. Keep out of `/aws-blocks/auth/` too; the `Auth` block owns it.
 - Construct routes while `aws-blocks/index.ts` loads (top level, or a module it imports). A later registration throws `Routes must be registered during initialization`. The same method and path twice throws `RawRouteErrors.DuplicateRoute`. A route is not exported.
-- The method must match exactly: a `GET` route does not answer `HEAD`. The dispatcher answers every `OPTIONS` preflight itself, and rejects a request whose `Origin` is not allowed before the handler runs (`cdk-blocks migrate guide client-wiring`, CORS). Requests without an `Origin` header, such as webhooks, pass.
+- The method must match exactly: a `GET` route does not answer `HEAD`. The dispatcher answers every `OPTIONS` preflight itself, and rejects a request whose `Origin` is not allowed before the handler runs (`cdk-blocks blockify-app guide client-wiring`, CORS). Requests without an `Origin` header, such as webhooks, pass.
 - `ctx.request`: `headers`, `text()`, `json()`, `body`, `url` (`url.searchParams` for the query), `params`, `signal`.
 - `ctx.response`: `status` (default 200), `headers`, `send(body)`. A string is sent as it is; any other value is sent as JSON. Defaults: `Content-Type: application/json` and `Cache-Control: no-store, no-cache, must-revalidate, proxy-revalidate`. Set `Content-Type` for HTML, text or CSV.
 - Redirect: `ctx.response.status = 302; ctx.response.headers.set('Location', to); ctx.response.send('')`. Cookies: `ctx.response.headers.append('Set-Cookie', ...)` once per cookie.
@@ -92,9 +92,9 @@ new RawRoute(scope, 'stripe-webhook', {
 - `res.json(data)` becomes `return data`. Keep the response field names that the frontend reads.
 - Port what the handler does to its input before it uses it, in the same order: `trim()`, defaults, conversions such as `Number(req.params.id)`, length limits. A method receives its arguments exactly as the frontend sent them, and a check that ran on the trimmed value passes `'  '` when the trim is gone.
 - `res.status(code).json({ error })` becomes `throw new ApiError(error, code)`. A frontend branch on `err.status` keeps working.
-- Middleware becomes a helper that the method calls first: auth to `auth.requireAuth(context)`, validation to a schema parse that throws `ApiError(..., 400)`, rate limits to `cdk-blocks migrate guide aws-limits`.
+- Middleware becomes a helper that the method calls first: auth to `auth.requireAuth(context)`, validation to a schema parse that throws `ApiError(..., 400)`, rate limits to `cdk-blocks blockify-app guide aws-limits`.
 - `express.static`, CORS middleware, body parsers, cookie parsers and the `listen()` call have no replacement: `Hosting` serves the frontend and the handler parses JSON.
-- `multer` and other upload middleware: `cdk-blocks migrate guide file-uploads`.
+- `multer` and other upload middleware: `cdk-blocks blockify-app guide file-uploads`.
 - A route that renders a page (`res.render`, `reply.view`) at a path other than `/` becomes a `RawRoute` that sends the same HTML: `ctx.response.headers.set('Content-Type', 'text/html; charset=utf-8')`, with the template as a string in the module (`ejs.render(template, data)`), since the bundle carries no template files. A `RawRoute` cannot answer `/`; the playbook says what to do with a page the server renders there.
 - A plain form post (`application/x-www-form-urlencoded`) that has to keep its URL, because something outside the app posts to it or because its page must work without JavaScript, stays a `RawRoute`: `new URLSearchParams(await ctx.request.text())` gives the fields, and the answer is the same redirect as before.
 - When every route is ported, remove the old server from the `dev`, `build` and `start` scripts and from the bundler's dev proxy, then delete its directory and its unused dependencies. A server that stays in the build keeps its `process.env` reads and its port in the app.

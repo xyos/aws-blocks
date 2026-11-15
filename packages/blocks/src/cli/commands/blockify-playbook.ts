@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * The playbook that `cdk-blocks migrate playbook` prints for a coding agent:
+ * The playbook that `cdk-blocks blockify-app playbook` prints for a coding agent:
  * what was detected in the app, the procedure for moving it onto AWS Blocks,
  * and the guides to read for the surfaces the app has.
  *
@@ -17,7 +17,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { type AppProfile, type Detection, detectApp, type Framework, type Signal } from './migrate-detect.js';
+import { type AppProfile, type Detection, detectApp, type Framework, type Signal } from './blockify-detect.js';
 
 /** The skill directory inside the installed package. */
 export const SKILL_DIR = fileURLToPath(new URL('../../../skills/migrate-to-aws-blocks/', import.meta.url));
@@ -51,7 +51,7 @@ export const GUIDE_TAGS: Readonly<Record<string, readonly string[]>> = {
 };
 
 export interface Guide {
-	/** The name to pass to `cdk-blocks migrate guide`: the file name without `.md`. */
+	/** The name to pass to `cdk-blocks blockify-app guide`: the file name without `.md`. */
 	name: string;
 	title: string;
 	/** When the page matters, from its `> Read when:` line. */
@@ -71,7 +71,7 @@ export interface Blocker {
 	fix: string;
 }
 
-/** The `--output json` result of `cdk-blocks migrate playbook`. */
+/** The `--output json` result of `cdk-blocks blockify-app playbook`. */
 export interface PlaybookResult {
 	app: AppProfile;
 	signals: Signal[];
@@ -282,7 +282,7 @@ function assess({ app, signals }: Detection): Pick<PlaybookResult, 'blockers' | 
 	if (app.framework === 'unknown' && has('workspaces')) {
 		notes.push(
 			'This directory is the root of a workspace, and no framework was found in it: the app is one of its packages. ' +
-				'Find the package that holds the app, run `cdk-blocks -C <that directory> migrate playbook` for what it has, ' +
+				'Find the package that holds the app, run `cdk-blocks -C <that directory> blockify-app playbook` for what it has, ' +
 				'and read "Monorepos" in guide `package-managers`: AWS Blocks goes into the directory of the app, not into this one.',
 		);
 	} else if (app.framework === 'unknown') {
@@ -349,7 +349,7 @@ function describeDetection({ app, signals }: Detection, notes: readonly string[]
 
 /** The guide list that ends the playbook: the recommended guides first. */
 function describeGuides(guides: readonly RecommendedGuide[]): string {
-	const lines = ['## Guides', '', 'Print one or more with `cdk-blocks migrate guide <name>...`.', ''];
+	const lines = ['## Guides', '', 'Print one or more with `cdk-blocks blockify-app guide <name>...`.', ''];
 	const recommended = guides.filter((guide) => guide.recommended);
 	if (recommended.length > 0) {
 		lines.push('Read these before you write the tasks they cover; this app has their surface:', '');

@@ -8,7 +8,7 @@ Confirm every detail in `node_modules/@aws-blocks/blocks/docs/bb-data/README.md`
 
 - Default for this migration: `Database` from `@aws-blocks/blocks`. On AWS it is Aurora Serverless v2 PostgreSQL reached through the RDS Data API. Locally it is PGlite (WASM PostgreSQL). The existing schema, column types, ids, foreign keys and transactions stay the same.
 - `DistributedDatabase` (Aurora DSQL) has no idle cost, but it has no foreign keys, Row Level Security, triggers or PL/pgSQL, and a transaction can change at most 3,000 rows. ORM-generated DDL needs changes. Use it only when the user asks for it (`docs/bb-distributed-data/README.md`).
-- `new Database(scope, 'main', { connection: fromExisting({ connectionString }) })` keeps the current external PostgreSQL (Supabase, Neon) and its data. `migrationsPath` is rejected with it. Use it only when the user wants to keep that database; see `cdk-blocks migrate guide supabase`.
+- `new Database(scope, 'main', { connection: fromExisting({ connectionString }) })` keeps the current external PostgreSQL (Supabase, Neon) and its data. `migrationsPath` is rejected with it. Use it only when the user wants to keep that database; see `cdk-blocks blockify-app guide supabase`.
 - A preview package `@aws-blocks/bb-database` also exports a `Database`. The umbrella does not export it. Import `Database` from `@aws-blocks/blocks`.
 
 ## Constructor and options
@@ -108,7 +108,7 @@ Local checks pass while the deployed app fails on these. Handle each one in code
 sql`SELECT * FROM users WHERE id IN (SELECT jsonb_array_elements_text(${JSON.stringify(ids)}::jsonb))`
 ```
 
-- PGlite uses one connection and has no Data API limits and no cold start. Bound every list query with `LIMIT`; see `cdk-blocks migrate guide aws-limits`.
+- PGlite uses one connection and has no Data API limits and no cold start. Bound every list query with `LIMIT`; see `cdk-blocks blockify-app guide aws-limits`.
 
 ## Errors
 
@@ -151,7 +151,7 @@ export async function withDbRetry<T>(fn: () => Promise<T>, deadline = Date.now()
 ## Where the code runs
 
 - Database code lives in `aws-blocks/` and runs in the Blocks backend. The block grants Data API access to the backend execution role and reads the cluster from environment variables the backend receives (`BLOCKS_<id>_CLUSTER_ARN`, `_SECRET_ARN`, `_DATABASE`).
-- Next.js server components, route handlers and server actions call `ApiNamespace` methods: `import { api } from 'aws-blocks'`. In server code that import resolves to the generated RPC client, so `db` is never available there. See `cdk-blocks migrate guide nextjs` and `client-wiring`.
+- Next.js server components, route handlers and server actions call `ApiNamespace` methods: `import { api } from 'aws-blocks'`. In server code that import resolves to the generated RPC client, so `db` is never available there. See `cdk-blocks blockify-app guide nextjs` and `client-wiring`.
 - Move each server-side ORM call into an `ApiNamespace` method that checks the caller, and return plain JSON values.
 
 ## Local data and production data

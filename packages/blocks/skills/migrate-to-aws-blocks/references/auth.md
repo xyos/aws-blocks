@@ -2,7 +2,7 @@
 
 > Read when: the app signs users in with its own code or a library (Auth.js / next-auth, better-auth, Clerk, Passport, hand-rolled sessions) and the migration replaces that with the `Auth` block.
 
-Confirm details in `node_modules/@aws-blocks/blocks/docs/bb-auth/README.md` (recipes, option tables), `docs/bb-auth/CUSTOMIZING-AUTH-UI.md` (custom forms) and `docs/auth-common/README.md` (UI helpers). Supabase-hosted auth stays on Supabase: see `cdk-blocks migrate guide supabase`.
+Confirm details in `node_modules/@aws-blocks/blocks/docs/bb-auth/README.md` (recipes, option tables), `docs/bb-auth/CUSTOMIZING-AUTH-UI.md` (custom forms) and `docs/auth-common/README.md` (UI helpers). Supabase-hosted auth stays on Supabase: see `cdk-blocks blockify-app guide supabase`.
 
 ## Pick the configuration
 

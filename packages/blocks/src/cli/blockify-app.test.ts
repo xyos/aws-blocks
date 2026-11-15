@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { after, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { OPENNEXT_VERIFIED_RANGE } from './commands/migrate-check.js';
+import { OPENNEXT_VERIFIED_RANGE } from './commands/blockify-check.js';
 import {
 	GUIDE_TAGS,
 	listGuides,
@@ -16,7 +16,8 @@ import {
 	rangeStanding,
 	SKILL_DIR,
 	selectSections,
-} from './commands/migrate-playbook.js';
+} from './commands/blockify-playbook.js';
+import { SERVER_FUNCTION_PATH } from './commands/blockify-server.js';
 import { runCli } from './test-helpers.js';
 
 const created: string[] = [];
@@ -26,7 +27,7 @@ after(() => {
 
 /** Write `files` to a fresh temporary directory; returns it. */
 function writeApp(files: Record<string, string>): string {
-	const root = mkdtempSync(join(tmpdir(), 'blocks-migrate-app-'));
+	const root = mkdtempSync(join(tmpdir(), 'blocks-blockify-app-'));
 	created.push(root);
 	for (const [path, text] of Object.entries(files)) {
 		mkdirSync(dirname(join(root, path)), { recursive: true });
@@ -65,14 +66,14 @@ interface Playbook {
 }
 
 async function playbookOf(root: string): Promise<{ code: number; result: Playbook }> {
-	const run = await runCli(['migrate', 'playbook', '--output', 'json'], { cwd: root });
+	const run = await runCli(['blockify-app', 'playbook', '--output', 'json'], { cwd: root });
 	return { code: run.code, result: JSON.parse(run.stdout) as Playbook };
 }
 
 const recommended = (result: Playbook): string[] =>
 	result.guides.filter((guide) => guide.recommended).map((guide) => guide.name);
 
-describe('cdk-blocks migrate playbook', () => {
+describe('cdk-blocks blockify-app playbook', () => {
 	it('keeps the sections and recommends the guides for the surfaces the app has, and no others', async () => {
 		const plain = await playbookOf(nextApp('16.4.2'));
 		assert.strictEqual(plain.code, 0);
@@ -116,7 +117,7 @@ describe('cdk-blocks migrate playbook', () => {
 			result.blockers.map((blocker) => blocker.id),
 			['next-major-unsupported'],
 		);
-		const text = await runCli(['migrate', 'playbook'], { cwd: root });
+		const text = await runCli(['blockify-app', 'playbook'], { cwd: root });
 		assert.strictEqual(text.code, 1);
 		assert.match(text.stdout, /Next\.js 14\.2\.35/);
 		assert.doesNotMatch(text.stdout, /## Scaffold task/);
@@ -256,7 +257,7 @@ describe('cdk-blocks migrate playbook', () => {
 
 		const atRoot = await playbookOf(root);
 		assert.strictEqual(atRoot.result.app.framework, 'unknown');
-		assert.ok(atRoot.result.notes.some((note) => note.includes('-C <that directory> migrate playbook')));
+		assert.ok(atRoot.result.notes.some((note) => note.includes('-C <that directory> blockify-app playbook')));
 
 		const inApp = await playbookOf(join(root, 'apps', 'web'));
 		assert.strictEqual(inApp.result.app.framework, 'nextjs');
@@ -287,8 +288,8 @@ describe('cdk-blocks migrate playbook', () => {
 			'app/api/pay/route.ts':
 				'export async function POST() { return Response.json({ k: process.env.STRIPE_KEY?.length }) }\n',
 		});
-		const json = await runCli(['migrate', 'playbook', '--output', 'json'], { cwd: root });
-		const text = await runCli(['migrate', 'playbook'], { cwd: root });
+		const json = await runCli(['blockify-app', 'playbook', '--output', 'json'], { cwd: root });
+		const text = await runCli(['blockify-app', 'playbook'], { cwd: root });
 		const result = JSON.parse(json.stdout) as Playbook;
 		assert.deepStrictEqual(result.app.envVars, ['DATABASE_URL', 'STRIPE_KEY']);
 		for (const output of [json.stdout, text.stdout]) {
@@ -306,7 +307,7 @@ describe('cdk-blocks migrate playbook', () => {
 	it('changes no file of the app', async () => {
 		const root = nextApp('16.4.2', {}, { pg: '^8.0.0' });
 		const before = readdirSync(root, { recursive: true }).sort();
-		await runCli(['migrate', 'playbook'], { cwd: root });
+		await runCli(['blockify-app', 'playbook'], { cwd: root });
 		assert.deepStrictEqual(readdirSync(root, { recursive: true }).sort(), before);
 	});
 });
@@ -342,9 +343,9 @@ describe('selectSections', () => {
 	});
 });
 
-describe('cdk-blocks migrate guide', () => {
+describe('cdk-blocks blockify-app guide', () => {
 	it('lists every guide without a name, and prints the named guides in order', async () => {
-		const list = await runCli(['migrate', 'guide', '--output', 'json'], { cwd: tmpdir() });
+		const list = await runCli(['blockify-app', 'guide', '--output', 'json'], { cwd: tmpdir() });
 		const listed: { guides: { name: string }[] } = JSON.parse(list.stdout);
 		const names = listed.guides.map((guide) => guide.name);
 		assert.deepStrictEqual(
@@ -353,14 +354,14 @@ describe('cdk-blocks migrate guide', () => {
 		);
 		assert.ok(!names.includes('playbook'));
 
-		const two = await runCli(['migrate', 'guide', 'database', 'auth'], { cwd: tmpdir() });
+		const two = await runCli(['blockify-app', 'guide', 'database', 'auth'], { cwd: tmpdir() });
 		assert.strictEqual(two.code, 0);
 		const database = two.stdout.indexOf('# Relational data');
 		assert.ok(database === 0 && two.stdout.indexOf('\n# ', 1) > database);
 	});
 
 	it('exits 2 for an unknown guide and suggests the closest name', async () => {
-		const run = await runCli(['migrate', 'guide', 'databse'], { cwd: tmpdir() });
+		const run = await runCli(['blockify-app', 'guide', 'databse'], { cwd: tmpdir() });
 		assert.strictEqual(run.code, 2);
 		assert.match(run.stderr, /Did you mean "database"\?/);
 		assert.strictEqual(run.stdout, '');
@@ -421,21 +422,21 @@ interface CheckOutput {
 }
 
 async function failedChecks(root: string): Promise<{ code: number; failed: string[] }> {
-	const run = await runCli(['migrate', 'check', '--output', 'json'], { cwd: root });
+	const run = await runCli(['blockify-app', 'check', '--output', 'json'], { cwd: root });
 	const result = JSON.parse(run.stdout) as CheckOutput;
 	assert.strictEqual(result.ok, run.code === 0);
 	for (const check of result.checks) assert.strictEqual(check.fix === null, check.ok, check.id);
 	return { code: run.code, failed: result.checks.filter((check) => !check.ok).map((check) => check.id) };
 }
 
-describe('cdk-blocks migrate check', () => {
+describe('cdk-blocks blockify-app check', () => {
 	it('passes an app migrated as the playbook says', async () => {
 		assert.deepStrictEqual(await failedChecks(migratedApp()), { code: 0, failed: [] });
 	});
 
 	it('stops at the scaffold when the app has none, and names the scaffold command', async () => {
 		const root = nextApp('16.4.2');
-		const run = await runCli(['migrate', 'check'], { cwd: root });
+		const run = await runCli(['blockify-app', 'check'], { cwd: root });
 		assert.strictEqual(run.code, 1);
 		assert.match(run.stdout, /FAIL {2}scaffold/);
 		assert.match(run.stdout, /create-blocks-app@latest \. --template nextjs/);
@@ -745,7 +746,7 @@ describe('cdk-blocks migrate check', () => {
 				'## Before deploy\n- [ ] secret: `REVALIDATE_SECRET_V2`\n- [ ] config: `FLAGS`',
 			),
 		);
-		const run = await runCli(['migrate', 'check'], { cwd: partial });
+		const run = await runCli(['blockify-app', 'check'], { cwd: partial });
 		assert.strictEqual(run.code, 1);
 		assert.match(run.stdout, /declares REVALIDATE_SECRET, but "Before deploy" in MIGRATION\.md does not name it/);
 		const before = withValue((text) =>
@@ -764,10 +765,171 @@ describe('cdk-blocks migrate check', () => {
 	});
 });
 
-describe('cdk-blocks migrate skill', () => {
+/** The logical id of the function in {@link synthesizedApp}. */
+const SERVER_FUNCTION = 'HostingComputedefaultFunction35E53DE1';
+
+/**
+ * A migrated app with the `cdk.out` that synth writes for a server-rendered
+ * app: one template with the function and the method that invokes it, and the
+ * directory of the function's code. `extra` adds files to the app itself.
+ */
+function synthesizedApp(
+	fn: { handler: string; code: Record<string, string>; variables?: Record<string, unknown>; streamed: boolean },
+	extra: Record<string, string> = {},
+): string {
+	const template = {
+		Resources: {
+			[SERVER_FUNCTION]: {
+				Type: 'AWS::Lambda::Function',
+				Properties: {
+					Code: { S3Bucket: 'assets', S3Key: 'c0ffee.zip' },
+					Handler: fn.handler,
+					Environment: { Variables: fn.variables ?? {} },
+				},
+				Metadata: { 'aws:cdk:path': 'notes-app-a1b2c3-prod/Hosting/Hosting/Compute-default/Function/Resource' },
+			},
+			HostingCdnSsrRestApiANYFE7537E7: {
+				Type: 'AWS::ApiGateway::Method',
+				Properties: {
+					HttpMethod: 'ANY',
+					Integration: {
+						Type: 'AWS_PROXY',
+						...(fn.streamed ? { ResponseTransferMode: 'STREAM' } : {}),
+						Uri: {
+							'Fn::Join': [
+								'',
+								[
+									'arn:aws:apigateway:us-east-1:lambda:path/functions/',
+									{ 'Fn::GetAtt': [SERVER_FUNCTION, 'Arn'] },
+									fn.streamed ? '/response-streaming-invocations' : '/invocations',
+								],
+							],
+						},
+					},
+				},
+			},
+		},
+	};
+	return migratedApp((files) => {
+		files['cdk.out/notes-app-a1b2c3-prod.template.json'] = JSON.stringify(template);
+		for (const [path, text] of Object.entries(fn.code)) files[`cdk.out/asset.c0ffee/${path}`] = text;
+		Object.assign(files, extra);
+	});
+}
+
+/** The `server-bundle` checks of `blockify-app check --server`, and the ids of every failed check. */
+async function serverChecks(
+	root: string,
+): Promise<{ code: number; failed: string[]; server: { ok: boolean; message: string; fix: string | null }[] }> {
+	const run = await runCli(['blockify-app', 'check', '--server', '--output', 'json'], { cwd: root });
+	const result = JSON.parse(run.stdout) as {
+		ok: boolean;
+		checks: { id: string; ok: boolean; message: string; fix: string | null }[];
+	};
+	assert.strictEqual(result.ok, run.code === 0);
+	return {
+		code: run.code,
+		failed: result.checks.filter((check) => !check.ok).map((check) => check.id),
+		server: result.checks.filter((check) => check.id === 'server-bundle'),
+	};
+}
+
+describe('cdk-blocks blockify-app check --server', () => {
+	/** A server that imports a package and answers every request with 200. */
+	const SERVER = {
+		'server/run.sh': '#!/bin/sh\nexec node server/entry.mjs\n',
+		'server/entry.mjs':
+			"import 'left-pad-fixture';\nimport http from 'node:http';\nhttp.createServer((_, res) => res.end('ok')).listen(Number(process.env.PORT), '127.0.0.1');\n",
+	};
+	const PACKAGE = {
+		'node_modules/left-pad-fixture/package.json': '{"name":"left-pad-fixture","main":"index.js"}\n',
+		'node_modules/left-pad-fixture/index.js': 'module.exports = {};\n',
+	};
+	const WEB_ADAPTER = { AWS_LAMBDA_EXEC_WRAPPER: '/opt/bootstrap', PORT: '8080' };
+
+	it('does not start a server without the flag', async () => {
+		const root = synthesizedApp({ handler: 'server/run.sh', code: SERVER, variables: WEB_ADAPTER, streamed: true });
+		assert.deepStrictEqual(await failedChecks(root), { code: 0, failed: [] });
+	});
+
+	it('fails when there is no synth output to read, and names the synth step', async () => {
+		const { code, failed, server } = await serverChecks(migratedApp());
+		assert.deepStrictEqual({ code, failed }, { code: 1, failed: ['server-bundle'] });
+		assert.match(server[0].fix ?? '', /cdk synth/);
+	});
+
+	it('passes an app that Hosting serves as files: it has no server function', async () => {
+		const root = migratedApp((files) => {
+			files['cdk.out/notes-app-a1b2c3-prod.template.json'] = JSON.stringify({
+				Resources: { Bucket: { Type: 'AWS::S3::Bucket', Properties: {} } },
+			});
+		});
+		assert.deepStrictEqual((await serverChecks(root)).failed, []);
+	});
+
+	it("fails a server whose package is in the app's node_modules and not in the uploaded files, and passes once it is uploaded", {
+		skip: process.platform === 'win32',
+	}, async () => {
+		// The package resolves from cdk.out upwards, as it does in every local check; the deploy uploads the directory alone.
+		const missing = synthesizedApp(
+			{ handler: 'server/run.sh', code: SERVER, variables: WEB_ADAPTER, streamed: true },
+			PACKAGE,
+		);
+		const { code, failed, server } = await serverChecks(missing);
+		assert.deepStrictEqual({ code, failed }, { code: 1, failed: ['server-bundle'] });
+		assert.match(server[0].message, /exits at start.*left-pad-fixture/);
+
+		const uploaded = Object.fromEntries(Object.entries(PACKAGE).map(([path, text]) => [`server/${path}`, text]));
+		const bundled = synthesizedApp({
+			handler: 'server/run.sh',
+			code: { ...SERVER, ...uploaded },
+			variables: WEB_ADAPTER,
+			streamed: true,
+		});
+		const started = await serverChecks(bundled);
+		assert.deepStrictEqual(started.failed, []);
+		assert.match(started.server[0].message, /answers GET \/ with 200/);
+	});
+
+	it('fails a handler that buffers its response where the template invokes it with streaming, and the reverse', async () => {
+		const buffered = { 'index.mjs': "export const handler = async () => ({ statusCode: 200, body: 'ok' });\n" };
+		const streaming = {
+			'index.mjs':
+				'export const handler = awslambda.streamifyResponse(async (_event, stream) => {\n\tawslambda.HttpResponseStream.from(stream, { statusCode: 200 }).end();\n});\n',
+		};
+		const run = (code: Record<string, string>, streamed: boolean) =>
+			serverChecks(synthesizedApp({ handler: 'index.handler', code, streamed }));
+
+		const mismatch = await run(buffered, true);
+		assert.deepStrictEqual(mismatch.failed, ['server-bundle']);
+		assert.match(mismatch.server[0].message, /buffered response.*502/);
+		assert.match(mismatch.server[0].fix ?? '', /streaming: true/);
+
+		assert.deepStrictEqual((await run(streaming, false)).failed, ['server-bundle']);
+		assert.deepStrictEqual((await run(streaming, true)).failed, []);
+		assert.deepStrictEqual((await run(buffered, false)).failed, []);
+	});
+
+	it('fails a handler that does not load from the uploaded files', async () => {
+		const { failed, server } = await serverChecks(
+			synthesizedApp({
+				handler: 'index.handler',
+				code: {
+					'index.mjs':
+						"import 'left-pad-fixture';\nexport const handler = async () => ({ statusCode: 200 });\n",
+				},
+				streamed: false,
+			}),
+		);
+		assert.deepStrictEqual(failed, ['server-bundle']);
+		assert.match(server[0].message, /does not load.*left-pad-fixture/);
+	});
+});
+
+describe('cdk-blocks blockify-app skill', () => {
 	it('copies the skill under its own name, and refuses to replace a copy without --force', async () => {
 		const root = writeApp({ 'package.json': '{}\n' });
-		const run = await runCli(['migrate', 'skill', '.claude/skills'], { cwd: root });
+		const run = await runCli(['blockify-app', 'skill', '.claude/skills'], { cwd: root });
 		assert.strictEqual(run.code, 0);
 		const copy = join(root, '.claude', 'skills', 'migrate-to-aws-blocks');
 		assert.strictEqual(
@@ -777,10 +939,10 @@ describe('cdk-blocks migrate skill', () => {
 		assert.ok(existsSync(join(copy, 'references', 'playbook.md')));
 
 		writeFileSync(join(copy, 'SKILL.md'), 'edited by the user\n');
-		const again = await runCli(['migrate', 'skill', '.claude/skills'], { cwd: root });
+		const again = await runCli(['blockify-app', 'skill', '.claude/skills'], { cwd: root });
 		assert.strictEqual(again.code, 1);
 		assert.strictEqual(readFileSync(join(copy, 'SKILL.md'), 'utf-8'), 'edited by the user\n');
-		const forced = await runCli(['migrate', 'skill', '.claude/skills', '--force'], { cwd: root });
+		const forced = await runCli(['blockify-app', 'skill', '.claude/skills', '--force'], { cwd: root });
 		assert.strictEqual(forced.code, 0);
 		assert.notStrictEqual(readFileSync(join(copy, 'SKILL.md'), 'utf-8'), 'edited by the user\n');
 	});
@@ -815,7 +977,7 @@ describe('the migrate-to-aws-blocks skill', () => {
 			readFileSync(join(SKILL_DIR, 'references', file), 'utf-8'),
 		);
 		for (const page of pages) {
-			for (const match of page.matchAll(/cdk-blocks migrate guide ([a-z-]+)`/g)) {
+			for (const match of page.matchAll(/cdk-blocks blockify-app guide ([a-z-]+)`/g)) {
 				assert.ok(guides.includes(match[1]), `no guide "${match[1]}"`);
 			}
 		}
@@ -838,5 +1000,14 @@ describe('version ranges copied from @aws-blocks/hosting', () => {
 	it('match the ranges the hosting adapter builds with', () => {
 		assert.strictEqual(NEXT_SUPPORTED_RANGE, constant('OPENNEXT_FALLBACK_NEXT_PEER_RANGE'));
 		assert.strictEqual(OPENNEXT_VERIFIED_RANGE, constant('VERIFIED_OPENNEXT_RANGE'));
+	});
+
+	it('finds the server function by the construct ids that Hosting gives it', () => {
+		const source = (file: string): string =>
+			readFileSync(fileURLToPath(new URL(`../../../hosting/src/constructs/${file}`, import.meta.url)), 'utf-8');
+		assert.match(source('hosting_construct.ts'), /new ComputeConstruct\(this, `Compute-\$\{name\}`/);
+		assert.match(source('compute_construct.ts'), /new LambdaFunction\(this, 'Function'/);
+		assert.match('app-prod/Hosting/Hosting/Compute-default/Function/Resource', SERVER_FUNCTION_PATH);
+		assert.doesNotMatch('app-prod/Hosting/Hosting/Cdn/RouteStoreKeys/Fn/Resource', SERVER_FUNCTION_PATH);
 	});
 });

@@ -26,14 +26,14 @@ const order = await orders.get('42');            // typed from the backend metho
 "scripts": { "prebuild": "cdk-blocks generate client" }
 ```
 
-- If the app already has a `prebuild`, chain the command. Some package managers do not run `pre` scripts (`cdk-blocks migrate guide package-managers`); then put it at the start of `build`.
+- If the app already has a `prebuild`, chain the command. Some package managers do not run `pre` scripts (`cdk-blocks blockify-app guide package-managers`); then put it at the start of `build`.
 - After you add or rename a namespace, the client is stale until one of the writers runs. `cdk-blocks dev` restarts on a backend change.
 - `generate client` writes the AWS variant, and `cdk-blocks dev` writes the local one. After a build that ran `prebuild`, restart `cdk-blocks dev` before you test locally, so that it writes its own client again.
 
 ## Dependencies and workspaces
 
 - The scaffold adds `"aws-blocks"` to the root `workspaces`. With npm the install links it into the root `node_modules`, and imports from the root package resolve.
-- A package other than the root that imports `aws-blocks` (a nested `web/` or `apps/frontend/`) declares it in its own `dependencies` (`"aws-blocks": "*"` for npm; `workspace:*` for pnpm and yarn). pnpm also needs `aws-blocks` in `pnpm-workspace.yaml` (`cdk-blocks migrate guide package-managers`).
+- A package other than the root that imports `aws-blocks` (a nested `web/` or `apps/frontend/`) declares it in its own `dependencies` (`"aws-blocks": "*"` for npm; `workspace:*` for pnpm and yarn). pnpm also needs `aws-blocks` in `pnpm-workspace.yaml` (`cdk-blocks blockify-app guide package-managers`).
 - When the app is itself a member of a larger npm workspace, npm ignores the app's own `workspaces`. Add `<app path>/aws-blocks` to the `workspaces` of the outer root; the scaffold prints this.
 - Symptom of missing wiring: `Cannot find module 'aws-blocks'` at type check or build. Fix the dependency and workspace entries; an alias hides the problem.
 
@@ -63,7 +63,7 @@ try { await orders.get(id); } catch (e) {
 - The HTTP response of a failed call is 200, so code that inspects `response.status` sees nothing. Port every status branch to `e.status`.
 - The backend must throw `new ApiError(message, status)` for each status the frontend branches on; other throws arrive as 500 `Internal error`.
 - A response that is not JSON-RPC (a gateway `429`, an HTML error page) also rejects with `ApiError`: `status` is the HTTP status (502 when that was 2xx) and `message` is `HTTP <status>` or the body's `message`.
-- Auth state errors are returned, not thrown: `cdk-blocks migrate guide auth`.
+- Auth state errors are returned, not thrown: `cdk-blocks blockify-app guide auth`.
 
 ## Browser-safe entry points
 
@@ -108,12 +108,12 @@ The URL is resolved on the first call, in this order: `BLOCKS_API_URL`, `BLOCKS_
 
   This matters most in a part that every page renders, such as a header with a cart count or the user's name: without the guard every page fails for a visitor who has no cookie yet. A framework that streams its HTML has already sent status 200 by then, and the page stops in the middle.
 - Next.js edge-runtime routes get no environment variables on AWS, so the client cannot find the API there. Call the API from Node-runtime code.
-- More for Next.js: `cdk-blocks migrate guide nextjs`.
+- More for Next.js: `cdk-blocks blockify-app guide nextjs`.
 
 ## Frontend on another origin
 
 - With `api: blocksStack` on `Hosting`, the frontend and `/aws-blocks/api` share one origin and need no CORS setup. Local dev allows `localhost` and `127.0.0.1` origins.
 - A frontend that stays on another host needs its origin in `defaults.allowedOrigins` of `BlocksStack.create` in `aws-blocks/index.cdk.ts` (spread the preset first: `{ ...BlocksPresets.production, allowedOrigins: ['https://app.example.com'] }`). An origin outside the list is rejected on AWS and passes locally.
 - That frontend has no `/.blocks-sandbox/config.json`. Build its client with the deployed URL: `generateClient({ url: '<ApiUrl stack output>' })` from `aws-blocks`. Record the URL step in MIGRATION.md under After deploy.
-- Session cookies across different registrable domains need the `Auth` option `session: { crossDomain: true }` (`cdk-blocks migrate guide auth`).
+- Session cookies across different registrable domains need the `Auth` option `session: { crossDomain: true }` (`cdk-blocks blockify-app guide auth`).
 - Details: `node_modules/@aws-blocks/blocks/docs/core/README.md`, sections "Runtime config" and "CORS Configuration".

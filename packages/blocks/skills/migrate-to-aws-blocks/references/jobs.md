@@ -56,16 +56,16 @@ new CronJob(scope, 'cleanup', {
 
 - Hosting does not schedule `vercel.json` `crons`. When Hosting builds the app (deploy or a full synth), it prints: `vercel.json declares N cron job(s), but the hosting construct wires no scheduler — these will NEVER fire. Provision the schedule separately via AWS EventBridge (or a scheduled CloudWatch rule invoking your endpoint).`
 - Create one `CronJob` per `crons` entry with the converted schedule.
-- Move the logic of the cron route (`app/api/cron/<name>/route.ts`) into a function in `aws-blocks/` and call it from the `CronJob` handler. The handler runs in the backend function, outside the Next.js server, so replace Next.js-only calls (`revalidatePath`, `cookies()`) and ORM clients with blocks. See `cdk-blocks migrate guide database`.
+- Move the logic of the cron route (`app/api/cron/<name>/route.ts`) into a function in `aws-blocks/` and call it from the `CronJob` handler. The handler runs in the backend function, outside the Next.js server, so replace Next.js-only calls (`revalidatePath`, `cookies()`) and ORM clients with blocks. See `cdk-blocks blockify-app guide database`.
 - The old route and its `CRON_SECRET` check:
   - If only the Vercel scheduler called it, delete the route and remove `CRON_SECRET` from the environment list. The job needs no secret, because nothing outside AWS can invoke it.
-  - If an external caller also uses the URL (a monitoring service, a manual trigger), keep the route and its secret check, and make it call the same shared function. The route runs in the Next.js server function, so declare the secret as a Hosting value and record it in `MIGRATION.md` under Before deploy. See `cdk-blocks migrate guide secrets`.
+  - If an external caller also uses the URL (a monitoring service, a manual trigger), keep the route and its secret check, and make it call the same shared function. The route runs in the Next.js server function, so declare the secret as a Hosting value and record it in `MIGRATION.md` under Before deploy. See `cdk-blocks blockify-app guide secrets`.
 - The warning stays while `vercel.json` has `crons`. Remove the entries when the app leaves Vercel; keep them when the user still deploys there, and say in `MIGRATION.md` that the warning is expected.
 
 ## In-process timers
 
 - `setInterval` or node-cron that changes durable data (delete expired rows, send digests, sync an API) becomes a `CronJob` with the same period. Reason: a Lambda instance is frozen between requests and recycled at any time, so a timer in the process does not fire reliably.
-- `setInterval` that only prunes in-memory state (rate-limit map, cache) has nothing durable to do. Remove it together with the in-memory state, or move the state to a `KVStore` with a TTL. See `cdk-blocks migrate guide key-value`.
+- `setInterval` that only prunes in-memory state (rate-limit map, cache) has nothing durable to do. Remove it together with the in-memory state, or move the state to a `KVStore` with a TTL. See `cdk-blocks blockify-app guide key-value`.
 - `setTimeout(() => work(), delay)` after a response becomes `job.submit(payload, { delaySeconds })`.
 
 ## AsyncJob

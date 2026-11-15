@@ -60,7 +60,7 @@ packages:
 - AWS Blocks does not call corepack and does not read `packageManager`. For a pnpm repo, `buildCommand: 'pnpm run build'` works where `pnpm` is on `PATH` (for example after `corepack enable`), and `'npm run build'` works everywhere because `npm run` only starts the script. Choose the form that the deploy machine supports and record the requirement in `MIGRATION.md`.
 - A failed build stops the deploy with `Frontend build failed: <buildCommand>` followed by `Ensure the build command is correct and all dependencies are installed.` The real error is in the build output above that line.
 - The build receives `BLOCKS_API_URL` when Hosting has an `api`, and `--conditions=cdk` is removed from `NODE_OPTIONS` for it.
-- Next.js: Hosting runs `npx @opennextjs/aws build` in the project. When `@opennextjs/aws` is absent it warns and runs `npx --yes @opennextjs/aws@<version>`, which downloads the package. Declare `@opennextjs/aws` in `devDependencies` with the repo's manager so that the build uses the locked version. See `cdk-blocks migrate guide nextjs`.
+- Next.js: Hosting runs `npx @opennextjs/aws build` in the project. When `@opennextjs/aws` is absent it warns and runs `npx --yes @opennextjs/aws@<version>`, which downloads the package. Declare `@opennextjs/aws` in `devDependencies` with the repo's manager so that the build uses the locked version. See `cdk-blocks blockify-app guide nextjs`.
 - Astro and SvelteKit: when Hosting has to add an adapter package, it picks the manager from the lockfile in this order: `pnpm-lock.yaml`, `yarn.lock`, `bun.lockb` or `bun.lock`, else npm.
 
 ## `preinstall` guards and the `packageManager` pin

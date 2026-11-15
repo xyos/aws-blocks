@@ -27,7 +27,7 @@ sed 's/=.*//' .env* 2>/dev/null | sort -u   # key names only; values stay out of
 - The scaffold adds `.env` and `.env.*` to `.gitignore` (it keeps `.env.example`). A value that exists only in an ignored file is missing on another machine or in CI, and the deployed bundle then contains `undefined`.
   - For values that are public and the same for every deploy, put them in `.env.production` and add `!.env.production` to `.gitignore`, or write them as constants.
   - Otherwise record each name in MIGRATION.md under Before deploy (`build-config`): the user must export it, or create `.env.production`, before the first deploy.
-- Delete variables that held the old API location (`VITE_API_URL`, `NEXT_PUBLIC_API_BASE_URL`). The generated client finds the API (`cdk-blocks migrate guide client-wiring`).
+- Delete variables that held the old API location (`VITE_API_URL`, `NEXT_PUBLIC_API_BASE_URL`). The generated client finds the API (`cdk-blocks blockify-app guide client-wiring`).
 
 ## (b) Secrets and config read by Blocks backend code (`aws-blocks/`)
 
@@ -103,13 +103,13 @@ npx --no -- cdk-blocks secret list                           # names only
 - `await Hosting.create(...)` checks during `cdk-blocks deploy` that each declared value exists and stops before it creates anything, with `UnresolvedSecretError` (`secret 'STRIPE_KEY' is referenced (environment) but not set.`). Without AWS credentials the check is skipped, so local `npx cdk synth` passes either way. `new Hosting(...)`, which the scaffold writes, does not check: the deploy succeeds and the first read fails at request time. Prefer `Hosting.create` (`index.cdk.ts` already uses top-level `await`).
 - Edge-runtime routes run on Lambda@Edge, which takes no environment variables. Read secrets in Node-runtime code.
 - Type-safe keys: `npx --no -- cdk-blocks generate types` writes `.blocks/hosting-values.d.ts` from the `secret()`/`config()` calls. Add `.blocks/**/*.d.ts` to `tsconfig.json` `include`. `--check` exits 1 when the file is stale. `cdk-blocks dev` regenerates it while it runs.
-- When a Blocks backend exists, an alternative is to move the work into an `ApiNamespace` method that reads a `Secret`, and call it from SSR code (`cdk-blocks migrate guide api-routes`).
+- When a Blocks backend exists, an alternative is to move the work into an `ApiNamespace` method that reads a `Secret`, and call it from SSR code (`cdk-blocks blockify-app guide api-routes`).
 - Details: `node_modules/@aws-blocks/blocks/docs/hosting/README.md`, section "Secrets & config".
 
 ## (d) Variables to delete
 
 - Config of what the migration replaced: the old auth provider's keys and URLs, the old host's variables (`VERCEL_*`, `KV_*`, `BLOB_*`), the old API base URL, `PORT` for a server that no longer runs.
-- `DATABASE_URL`, once the `Database` block replaces the driver (`cdk-blocks migrate guide database`).
+- `DATABASE_URL`, once the `Database` block replaces the driver (`cdk-blocks blockify-app guide database`).
 - Delete the reads in code too. Do not create a `Secret` for them and do not list them in MIGRATION.md.
 - `cdk-blocks deploy` writes the first environment variable whose name ends in `_DB_URL` or `_CONNECTION_STRING` to an SSM SecureString for the external-database feature. Remove stale ones from `.env.production` unless the database guide tells you to keep them.
 

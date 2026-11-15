@@ -9,8 +9,8 @@
  * is an edit here; the parser and the help read only this table.
  */
 
+import { blockifyCheck, blockifyGuide, blockifyPlaybook, blockifySkill } from './commands/blockify-app.js';
 import { migrate } from './commands/migrate.js';
-import { migrateCheck, migrateGuide, migratePlaybook, migrateSkill } from './commands/migrate-app.js';
 import * as commands from './commands.js';
 import type { Context } from './context.js';
 
@@ -322,10 +322,7 @@ export const COMMANDS: readonly CommandSpec[] = [
 		json: { ...DEPLOY_RESULT, live: null },
 		examples: [
 			{ command: 'cdk-blocks deploy', description: 'Deploy to production' },
-			{
-				command: 'cdk-blocks deploy --wait-live=300',
-				description: 'Deploy, then wait up to 300s for the new build',
-			},
+			{ command: 'cdk-blocks deploy --wait-live=300', description: 'Deploy, then wait up to 300s for the new build' },
 			{ command: 'cdk-blocks deploy --output json', description: 'Print {apiUrl, url, stack, account, region}' },
 			{ command: 'API_URL=$(cdk-blocks deploy --query apiUrl)', description: 'Print only the API URL, raw' },
 		],
@@ -456,8 +453,7 @@ export const COMMANDS: readonly CommandSpec[] = [
 			{
 				name: 'force',
 				type: 'boolean',
-				description:
-					'Write aws-blocks/client.js even when package.json sets "blocks.dev.generateClient": false',
+				description: 'Write aws-blocks/client.js even when package.json sets "blocks.dev.generateClient": false',
 			},
 		],
 		examples: [{ command: 'cdk-blocks generate client', description: 'Write aws-blocks/client.js' }],
@@ -511,10 +507,7 @@ export const COMMANDS: readonly CommandSpec[] = [
 				command: 'cdk-blocks db migrate aws-blocks/migrations',
 				description: 'Apply pending migrations to the local database',
 			},
-			{
-				command: 'cdk-blocks db status aws-blocks/migrations',
-				description: 'Show applied and pending migrations',
-			},
+			{ command: 'cdk-blocks db status aws-blocks/migrations', description: 'Show applied and pending migrations' },
 			{ command: 'cdk-blocks db pull', description: 'Introspect the database and write its files' },
 		],
 		handler: commands.db,
@@ -529,9 +522,7 @@ export const COMMANDS: readonly CommandSpec[] = [
 			{ name: 'options', description: '--force overwrites an existing copy', variadic: true },
 		],
 		passthrough: true,
-		examples: [
-			{ command: 'cdk-blocks vendorize @aws-blocks/bb-kv-store', description: 'Copy KVStore into the app' },
-		],
+		examples: [{ command: 'cdk-blocks vendorize @aws-blocks/bb-kv-store', description: 'Copy KVStore into the app' }],
 		handler: commands.vendorize,
 	},
 	{
@@ -591,7 +582,12 @@ export const COMMANDS: readonly CommandSpec[] = [
 		handler: migrate,
 	},
 	{
-		path: ['migrate', 'playbook'],
+		path: ['blockify-app'],
+		group: 'Project',
+		summary: 'Help a coding agent move an existing app onto AWS Blocks: playbook, guides, checks',
+	},
+	{
+		path: ['blockify-app', 'playbook'],
 		group: 'Project',
 		summary: 'Print the playbook for moving an existing app onto AWS Blocks (for coding agents)',
 		description:
@@ -602,12 +598,12 @@ export const COMMANDS: readonly CommandSpec[] = [
 			'It reads package.json, the lockfiles, the framework and platform config files and the source\n' +
 			'files (never the values in .env files), and prints: what it detected, with the file or\n' +
 			'dependency that shows it; the procedure, with the sections that apply to this app; and the\n' +
-			'guides to read for the surfaces the app has ("cdk-blocks migrate guide <name>").\n' +
+			'guides to read for the surfaces the app has ("cdk-blocks blockify-app guide <name>").\n' +
 			'When the app cannot be migrated as it is (a server-rendered Next.js version that AWS Blocks\n' +
 			'does not host), it prints the reason and the fix, and exits 1; with --output json, "playbook"\n' +
 			'is null and "blockers" lists them.\n' +
 			'The text is the "migrate-to-aws-blocks" Agent Skill that this package ships in skills/;\n' +
-			'"cdk-blocks migrate skill <dir>" copies it for agents that load skills.',
+			'"cdk-blocks blockify-app skill <dir>" copies it for agents that load skills.',
 		json: {
 			app: {
 				name: null,
@@ -630,20 +626,20 @@ export const COMMANDS: readonly CommandSpec[] = [
 			playbook: null,
 		},
 		examples: [
-			{ command: 'cdk-blocks migrate playbook', description: 'Print the playbook for the app in this directory' },
+			{ command: 'cdk-blocks blockify-app playbook', description: 'Print the playbook for the app in this directory' },
 			{
-				command: 'npx -y -p @aws-blocks/blocks cdk-blocks migrate playbook',
+				command: 'npx -y -p @aws-blocks/blocks cdk-blocks blockify-app playbook',
 				description: 'The same, in an app that has not installed @aws-blocks/blocks yet',
 			},
 			{
-				command: 'cdk-blocks migrate playbook --query app.framework',
+				command: 'cdk-blocks blockify-app playbook --query app.framework',
 				description: 'Print only the detected framework',
 			},
 		],
-		handler: migratePlaybook,
+		handler: blockifyPlaybook,
 	},
 	{
-		path: ['migrate', 'guide'],
+		path: ['blockify-app', 'guide'],
 		group: 'Project',
 		summary: 'Print a migration guide: auth, database, nextjs, secrets, …',
 		description:
@@ -656,13 +652,13 @@ export const COMMANDS: readonly CommandSpec[] = [
 		],
 		json: { guides: [{ name: null, title: null, readWhen: null, text: null }] },
 		examples: [
-			{ command: 'cdk-blocks migrate guide', description: 'List the guides' },
-			{ command: 'cdk-blocks migrate guide auth database', description: 'Print two guides' },
+			{ command: 'cdk-blocks blockify-app guide', description: 'List the guides' },
+			{ command: 'cdk-blocks blockify-app guide auth database', description: 'Print two guides' },
 		],
-		handler: migrateGuide,
+		handler: blockifyGuide,
 	},
 	{
-		path: ['migrate', 'check'],
+		path: ['blockify-app', 'check'],
 		group: 'Project',
 		summary: 'Check a migrated app against the playbook rules that its files show',
 		description:
@@ -678,23 +674,36 @@ export const COMMANDS: readonly CommandSpec[] = [
 			'under "Before deploy".\n' +
 			'It reads files and asks git which paths are ignored. It runs no build, no synth and no server:\n' +
 			'the validate task of the playbook does those.\n' +
+			'With --server it also starts the server function that "cdk synth" wrote for Hosting, from a\n' +
+			'read-only copy of the directory that the deploy uploads, away from node_modules and without\n' +
+			'AWS: a server that exits at start for want of a package, or a handler that buffers its response\n' +
+			'where the template invokes it with response streaming, deploys without an error and answers 502\n' +
+			'on every path. It needs cdk.out, so run it after the synth; an app served as files passes.\n' +
 			'Exit codes: 0 when every check passes; 1 when one fails, each with a "Fix:" line.',
+		flags: [
+			{
+				name: 'server',
+				type: 'boolean',
+				description: 'Also start the server function in cdk.out as AWS Lambda would (run after cdk synth)',
+			},
+		],
 		json: { ok: null, checks: [{ id: null, ok: null, message: null, fix: null }] },
 		examples: [
-			{ command: 'cdk-blocks migrate check', description: 'Check the app in this directory' },
-			{ command: 'cdk-blocks migrate check --query ok', description: 'Print true or false' },
+			{ command: 'cdk-blocks blockify-app check', description: 'Check the app in this directory' },
+			{ command: 'cdk-blocks blockify-app check --server', description: 'After cdk synth: also start the server' },
+			{ command: 'cdk-blocks blockify-app check --query ok', description: 'Print true or false' },
 		],
-		handler: migrateCheck,
+		handler: blockifyCheck,
 	},
 	{
-		path: ['migrate', 'skill'],
+		path: ['blockify-app', 'skill'],
 		group: 'Project',
 		summary: 'Copy the migration playbook as an Agent Skill into a skills directory',
 		description:
 			'Copy the "migrate-to-aws-blocks" Agent Skill (SKILL.md and its references/) to\n' +
 			'<dir>/migrate-to-aws-blocks, for a coding agent that loads skills from a directory, for example\n' +
-			'.claude/skills or .agents/skills. The skill is the text that "cdk-blocks migrate playbook" and\n' +
-			'"cdk-blocks migrate guide" print.',
+			'.claude/skills or .agents/skills. The skill is the text that "cdk-blocks blockify-app playbook" and\n' +
+			'"cdk-blocks blockify-app guide" print.',
 		args: [
 			{
 				name: 'dir',
@@ -706,11 +715,11 @@ export const COMMANDS: readonly CommandSpec[] = [
 		json: { skill: null, path: null, files: [null] },
 		examples: [
 			{
-				command: 'cdk-blocks migrate skill .claude/skills',
+				command: 'cdk-blocks blockify-app skill .claude/skills',
 				description: 'Install the skill for Claude Code in this project',
 			},
 		],
-		handler: migrateSkill,
+		handler: blockifySkill,
 	},
 	{
 		path: ['help'],

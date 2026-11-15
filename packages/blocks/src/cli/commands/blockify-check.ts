@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * `cdk-blocks migrate check`: the rules of the migration playbook that the
+ * `cdk-blocks blockify-app check`: the rules of the migration playbook that the
  * files of a migrated app show, checked without running the app. Each check
  * names the rule it stands for, and a failed one says how to fix it.
  *
@@ -13,8 +13,8 @@
 import { spawnSync } from 'node:child_process';
 import { readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { type Detection, detectApp, findInSources } from './migrate-detect.js';
-import { NEXT_SUPPORTED_RANGE, rangeStanding, scaffoldCommand } from './migrate-playbook.js';
+import { type Detection, detectApp, findInSources } from './blockify-detect.js';
+import { NEXT_SUPPORTED_RANGE, rangeStanding, scaffoldCommand } from './blockify-playbook.js';
 
 export interface Check {
 	/** A stable name: `scaffold`, `dependencies`, `report`. */
@@ -26,7 +26,7 @@ export interface Check {
 	fix: string | null;
 }
 
-/** The `--output json` result of `cdk-blocks migrate check`. */
+/** The `--output json` result of `cdk-blocks blockify-app check`. */
 export interface CheckResult {
 	ok: boolean;
 	checks: Check[];

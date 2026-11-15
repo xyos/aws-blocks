@@ -85,14 +85,14 @@ new Hosting(blocksStack, 'Hosting', {
 ## Feature support on AWS
 
 - App Router and Pages Router (`getServerSideProps`, `getStaticProps`, `pages/api/*`), route handlers and server actions run in one server Lambda function behind CloudFront and an API Gateway REST API, with response streaming on the default door.
-- Limits on that path: confirm the request size and timeout of the server origin in the hosting README (sections "The server origin's REST API" and "The ALB and API Gateway doors: rules and limits", which gives 10 MB request payload and a 29-second integration timeout for API Gateway). Move large uploads to direct S3 uploads: `cdk-blocks migrate guide file-uploads`. Move work longer than the timeout to a job: `cdk-blocks migrate guide jobs`.
+- Limits on that path: confirm the request size and timeout of the server origin in the hosting README (sections "The server origin's REST API" and "The ALB and API Gateway doors: rules and limits", which gives 10 MB request payload and a 29-second integration timeout for API Gateway). Move large uploads to direct S3 uploads: `cdk-blocks blockify-app guide file-uploads`. Move work longer than the timeout to a job: `cdk-blocks blockify-app guide jobs`.
 - Middleware (`middleware.ts`): with the generated OpenNext config it is bundled into the server function. A hand-written config that splits it out makes it a Lambda@Edge function, which only the CloudFront door runs (`MiddlewareNeedsCloudFrontDoorError` on other doors).
 - `export const runtime = 'edge'` routes are supported. Each one is built as its own Lambda@Edge function (the build prints `Generated open-next.config.ts with edge function for: ...`). Consequences: the stack needs an explicit region or synth fails with `EdgeComputeRequiresRegionError`; outside `us-east-1` a second support stack is created in `us-east-1`, which must be bootstrapped; Lambda@Edge functions receive no environment variables, so `BLOCKS_API_URL` and `environment` values are absent there. The simplest fix is to delete the `runtime = 'edge'` line when the route works on Node.js. Otherwise add `env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }` to `BlocksStack.create` and record the `us-east-1` bootstrap in MIGRATION.md under Before deploy (`account`).
 - ISR, `revalidate`, `generateStaticParams`, `revalidatePath` and `revalidateTag` are supported in production shape: an S3 cache bucket seeded from the build, a DynamoDB tag table, an SQS FIFO revalidation queue and a revalidation function. With `incrementalRegeneration: false` (preview) only the seeded cache exists.
 - Shared-cache safety: a response that sets a cookie, or answers a request with credentials outside the cache key, is sent as `Cache-Control: private, no-store`. Set `frontDoor.features.cacheKeyCookies` to the session cookie name when per-user pages use `s-maxage` or `revalidate`.
 - `next/image`: a separate image function with `sharp` (`^0.35.5`, linux-x64) is installed at synth; when the install fails the build warns and images are served unoptimized. Remote sources follow `images.remotePatterns`.
 - Server-side WebSocket upgrades are unsupported on this path. Use the Realtime block for push.
-- `Hosting` creates no scheduler. `vercel.json` `crons` produce the warning `vercel.json declares N cron job(s), but the hosting construct wires no scheduler`; move each one to a cron job: `cdk-blocks migrate guide jobs`.
+- `Hosting` creates no scheduler. `vercel.json` `crons` produce the warning `vercel.json declares N cron job(s), but the hosting construct wires no scheduler`; move each one to a cron job: `cdk-blocks blockify-app guide jobs`.
 
 ## Vercel-specific files and packages
 
@@ -100,7 +100,7 @@ new Hosting(blocksStack, 'Hosting', {
 - The adapter does not inspect `@vercel/*` packages. The following is general knowledge; check each against the package's own documentation:
   - `@vercel/analytics`, `@vercel/speed-insights`: they build, and send no data off Vercel. Remove them or leave them; record the loss of analytics in MIGRATION.md.
   - `@vercel/og` / `next/og`: runs inside the server function. Keep it, on the Node.js runtime.
-  - `@vercel/kv`, `@vercel/blob`, `@vercel/postgres`, `@vercel/edge-config`: they call Vercel-hosted services. Replace them: `cdk-blocks migrate guide key-value`, `file-uploads`, `database`.
+  - `@vercel/kv`, `@vercel/blob`, `@vercel/postgres`, `@vercel/edge-config`: they call Vercel-hosted services. Replace them: `cdk-blocks blockify-app guide key-value`, `file-uploads`, `database`.
 - Vercel system variables (`VERCEL_URL`, `VERCEL_ENV`) are unset on AWS. Replace each read with a `config()` value or a request-derived host.
 
 ## Calling the backend and local development
@@ -116,12 +116,12 @@ new Hosting(blocksStack, 'Hosting', {
   const posts = await withAuth(() => api.listMyPosts());
   ```
 
-  `withAuth` reads cookies from `next/headers` and throws a 401 `ApiError` when there are none. See `cdk-blocks migrate guide auth`.
+  `withAuth` reads cookies from `next/headers` and throws a 401 `ApiError` when there are none. See `cdk-blocks blockify-app guide auth`.
 
 ## Environment variables
 
 - `NEXT_PUBLIC_*` values are inlined by `next build`, and that build runs inside synth and deploy with the environment of the deploying shell. Record each `NEXT_PUBLIC_*` name in MIGRATION.md so the user sets it where the deploy runs.
-- Server-side values come from the `environment` prop on `Hosting`: a plain string is visible in the CloudFormation template; `secret('KEY')` and `config('KEY')` (from `@aws-blocks/blocks/cdk`) inject only a locator. The key must equal the variable name. Read them with `getSecret('KEY')` / `getConfig('KEY')` from `@aws-blocks/hosting` (add it to `dependencies`); `process.env.KEY` holds the real value only locally. See `cdk-blocks migrate guide secrets`.
+- Server-side values come from the `environment` prop on `Hosting`: a plain string is visible in the CloudFormation template; `secret('KEY')` and `config('KEY')` (from `@aws-blocks/blocks/cdk`) inject only a locator. The key must equal the variable name. Read them with `getSecret('KEY')` / `getConfig('KEY')` from `@aws-blocks/hosting` (add it to `dependencies`); `process.env.KEY` holds the real value only locally. See `cdk-blocks blockify-app guide secrets`.
 - A setting that only the Blocks backend (`aws-blocks/index.ts`) can read is not visible in Next.js server code, which runs in a different Lambda function. Call an `api` method for it, or declare the value in `environment` as well.
 
 ## TypeScript

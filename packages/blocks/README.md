@@ -25,7 +25,7 @@ npm run dev          # → http://localhost:3000  (mocks, no AWS account needed)
 
 `--template <name>` picks a starter (`react`, `nextjs`, `backend`, …); see [`@aws-blocks/create-blocks-app`](https://www.npmjs.com/package/@aws-blocks/create-blocks-app).
 
-An app that already exists (Next.js, a single-page app, a static site, a Node.js server) moves onto AWS Blocks in place. A coding agent gets the procedure for that app from one command, run in its root: `npx -p @aws-blocks/blocks cdk-blocks migrate playbook` (see [Moving an existing app onto AWS Blocks](#moving-an-existing-app-onto-aws-blocks)).
+An app that already exists (Next.js, a single-page app, a static site, a Node.js server) moves onto AWS Blocks in place. A coding agent gets the procedure for that app from one command, run in its root: `npx -p @aws-blocks/blocks cdk-blocks blockify-app playbook` (see [Moving an existing app onto AWS Blocks](#moving-an-existing-app-onto-aws-blocks)).
 
 ## How it works
 
@@ -263,10 +263,10 @@ npx --no -- cdk-blocks --version
 | Data and blocks | `cdk-blocks db <migrate\|status\|generate-types\|pull> [args...]` | Data block operations, forwarded unchanged to the `bb-data` CLI |
 | Project | `cdk-blocks vendorize <package> [--force]` | Copy a Building Block into the app for customization |
 | | `cdk-blocks migrate [--dry-run] [--force]` | Move an app from `aws-blocks/scripts/*.ts` wrappers to `cdk-blocks` commands |
-| | `cdk-blocks migrate playbook` | Print the playbook a coding agent follows to move an existing app onto AWS Blocks |
-| | `cdk-blocks migrate guide [name...]` | Print migration guides by topic (`auth`, `database`, `nextjs`, …); without a name, list them |
-| | `cdk-blocks migrate check` | Check a migrated app against the playbook rules that its files show; exits 1 when one fails |
-| | `cdk-blocks migrate skill <dir> [--force]` | Copy the playbook and guides as an Agent Skill into a skills directory |
+| | `cdk-blocks blockify-app playbook` | Print the playbook a coding agent follows to move an existing app onto AWS Blocks |
+| | `cdk-blocks blockify-app guide [name...]` | Print migration guides by topic (`auth`, `database`, `nextjs`, …); without a name, list them |
+| | `cdk-blocks blockify-app check [--server]` | Check a migrated app against the playbook rules that its files show; with `--server`, also start the server function in `cdk.out`; exits 1 when a check fails |
+| | `cdk-blocks blockify-app skill <dir> [--force]` | Copy the playbook and guides as an Agent Skill into a skills directory |
 | | `cdk-blocks help [command...]` | Help |
 
 The npm-script spellings also work as hidden aliases: `dev:stop`, `sandbox:deploy`, `sandbox:preview`, `sandbox:destroy`, `sandbox:console`, `console`, `typegen`, `generate-client`, `spec`, `cleanup` (`dev stop --all`), `sandbox --deploy-only` (`sandbox deploy`), and `sandbox --preview` (`sandbox preview`). Global options can go before the command, between its words (`cdk-blocks generate --debug client`) or after it. `db`, `secret`, `config` and `vendorize` forward the tokens after their name to their tool unchanged, except the global options before a `--`, which apply to the run: `cdk-blocks secret list --profile prod` lists the secrets of that profile's account, and `cdk-blocks config list --output json` exits 2 because `config` has no JSON output. After `--`, every token is the tool's: `cdk-blocks config set GREETING -- -hello-`. A relative path given to `db` or `generate client|spec|types` (including `--out` and `--include`) is resolved from the directory you run the command in, as it was with the tools themselves. The exception is `-h`/`--help`: anywhere after one of these commands it shows help and never runs the tool with your arguments. For a verb of the tool (`cdk-blocks db pull ./out --help`, `cdk-blocks help secret remove KEY`), only `<verb> --help` reaches the tool, which prints that verb's usage.
@@ -341,11 +341,11 @@ Two commands behave differently after the migration: `npm run destroy` asks for 
 
 ### Moving an existing app onto AWS Blocks
 
-`cdk-blocks migrate playbook` is for a coding agent that moves an app built without AWS Blocks (a Next.js app, a Vite or other single-page app, a static site, an app with its own Node.js server) onto it, in the same repository. Run it in the root of that app. It needs no installed dependencies and no AWS account, and it changes no file:
+`cdk-blocks blockify-app playbook` is for a coding agent that moves an app built without AWS Blocks (a Next.js app, a Vite or other single-page app, a static site, an app with its own Node.js server) onto it, in the same repository. Run it in the root of that app. It needs no installed dependencies and no AWS account, and it changes no file:
 
 ```bash
-npx -p @aws-blocks/blocks cdk-blocks migrate playbook   # in an app that has not installed @aws-blocks/blocks yet
-npx --no -- cdk-blocks migrate playbook                 # once it has
+npx -p @aws-blocks/blocks cdk-blocks blockify-app playbook   # in an app that has not installed @aws-blocks/blocks yet
+npx --no -- cdk-blocks blockify-app playbook                 # once it has
 ```
 
 It prints three things:
@@ -356,24 +356,27 @@ It prints three things:
 
 When the app cannot be migrated as it is, the command prints the reason and the fix instead of the playbook, and exits 1. Today that is one of two apps: a server-rendered Next.js app on a major version below the range the hosting build supports (a static export has no minimum version), and a React Router app in framework mode that renders on a server, for which `Hosting` has no adapter (with `ssr: false` in `react-router.config.ts` it is a single-page app, which the playbook covers). With `--output json` the result is `{app, signals, blockers, notes, guides, playbook}`, and `playbook` is `null` when `blockers` is not empty.
 
-In a monorepo, run the command in the package that holds the app (`cdk-blocks -C apps/web migrate playbook`): AWS Blocks is added beside that package's `package.json`, not at the workspace root. At a workspace root that has no framework of its own, the output carries a note that says so.
+In a monorepo, run the command in the package that holds the app (`cdk-blocks -C apps/web blockify-app playbook`): AWS Blocks is added beside that package's `package.json`, not at the workspace root. At a workspace root that has no framework of its own, the output carries a note that says so.
 
 The playbook leaves one decision to you instead of making it. `Hosting` runs the server of Next.js, Nuxt, Astro, SvelteKit or Nitro and no other, and a `RawRoute` cannot answer `/`. So when the app's own server renders the page at `/` (a view engine, `res.render`), the agent asks what that page becomes, or stops with the question under "Blockers" in `MIGRATION.md` when it cannot ask.
 
 ```bash
-npx --no -- cdk-blocks migrate guide                 # list the guides and when to read each
-npx --no -- cdk-blocks migrate guide auth database   # print two guides
-npx --no -- cdk-blocks migrate check                 # after the migration: exit 1 when a check fails
+npx --no -- cdk-blocks blockify-app guide                 # list the guides and when to read each
+npx --no -- cdk-blocks blockify-app guide auth database   # print two guides
+npx --no -- cdk-blocks blockify-app check                 # after the migration: exit 1 when a check fails
+npx --no -- cdk-blocks blockify-app check --server        # after cdk synth: also start the server function
 ```
 
-`cdk-blocks migrate check` reads the migrated files and asks git which paths are ignored. It checks the scaffold, the dependencies and the workspace entry, that there is one lockfile, that the demo backend is gone, that `aws-blocks/index.ts` exports no bare function and names its scope with letters, digits and hyphens (the scope id is part of the name of every AWS resource), the `Hosting` block for the detected framework, the OpenNext and Next.js versions, that the framework's major version is the one of the last commit, that the `Hosting` block declares every environment variable that server code reads, that the build generates the client when the frontend imports `aws-blocks` (in the `build` script, or in the `Hosting` `buildCommand` for Astro, Nuxt, Nitro and SvelteKit, whose `build` script the deploy runs a second time under CDK), the `.gitignore` entries, and `MIGRATION.md`: its sections, no open task, and each Hosting `secret()` or `config()` value named under "Before deploy". Each failed check prints a `Fix:` line. It runs no build, no synth and no server, so a pass does not replace the playbook's validate step. `--output json` prints `{ok, checks: [{id, ok, message, fix}]}`.
+`cdk-blocks blockify-app check` reads the migrated files and asks git which paths are ignored. It checks the scaffold, the dependencies and the workspace entry, that there is one lockfile, that the demo backend is gone, that `aws-blocks/index.ts` exports no bare function and names its scope with letters, digits and hyphens (the scope id is part of the name of every AWS resource), the `Hosting` block for the detected framework, the OpenNext and Next.js versions, that the framework's major version is the one of the last commit, that the `Hosting` block declares every environment variable that server code reads, that the build generates the client when the frontend imports `aws-blocks` (in the `build` script, or in the `Hosting` `buildCommand` for Astro, Nuxt, Nitro and SvelteKit, whose `build` script the deploy runs a second time under CDK), the `.gitignore` entries, and `MIGRATION.md`: its sections, no open task, and each Hosting `secret()` or `config()` value named under "Before deploy". Each failed check prints a `Fix:` line. It runs no build, no synth and no server, so a pass does not replace the playbook's validate step. `--output json` prints `{ok, checks: [{id, ok, message, fix}]}`.
 
 Two of the `Hosting` checks stand for faults that no build, synth or local server shows: the deploy succeeds, and every page answers 502. A Nuxt or Nitro app needs `nitro: { awsLambda: { streaming: true } }` in its config, because `Hosting` invokes the server with response streaming and Nitro's handler buffers by default. An Astro app whose `astro.config` names its own adapter needs `vite.ssr.noExternal: true` for its build (and not for `astro dev`, which that option breaks), because `Hosting` uploads the server output without `node_modules`.
+
+`cdk-blocks blockify-app check --server` looks for both faults in what the deploy would upload, and for others of their kind that the file checks do not know. It needs `cdk.out`, so run it after `cdk synth`. It copies the code of each `Hosting` server function to a read-only directory away from the app's `node_modules`, and gives it the function's own environment variables. A function that the Lambda Web Adapter runs as a program is started, and must answer `GET /`; a handler that the Lambda runtime calls is loaded, and must stream its response exactly when the template invokes it with response streaming. It runs no Lambda runtime, no Lambda Web Adapter and no API Gateway, so a fault that needs one of them passes it. An app that `Hosting` serves as files has no server function and passes. On Windows a function whose handler is a shell script cannot be started, and the check fails with that reason.
 
 The playbook and the guides are an [Agent Skill](https://agentskills.io/specification) that ships in this package at [`skills/migrate-to-aws-blocks/`](skills/migrate-to-aws-blocks/SKILL.md). The commands above print that text, so an agent needs only the CLI. For an agent that loads skills from a directory, copy it there:
 
 ```bash
-npx --no -- cdk-blocks migrate skill .claude/skills   # writes .claude/skills/migrate-to-aws-blocks/
+npx --no -- cdk-blocks blockify-app skill .claude/skills   # writes .claude/skills/migrate-to-aws-blocks/
 ```
 
 The agent does not deploy while it follows the playbook: it stays local unless you ask for a deploy.

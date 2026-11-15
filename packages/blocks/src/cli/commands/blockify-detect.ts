@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * What `cdk-blocks migrate playbook` reads from an app that is not on AWS Blocks
+ * What `cdk-blocks blockify-app playbook` reads from an app that is not on AWS Blocks
  * yet: the package manager, the framework and how it renders, and the
  * surfaces a migration has to cover (data, auth, storage, jobs, secrets, AI),
  * each with the file or dependency that shows it.

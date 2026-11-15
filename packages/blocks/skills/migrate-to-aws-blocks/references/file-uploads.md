@@ -7,14 +7,14 @@ Confirm details in `node_modules/@aws-blocks/blocks/docs/bb-file-bucket/README.m
 ## How bytes move
 
 - File bytes go directly between the browser and S3 over presigned URLs. The backend only signs the URL.
-- Reason: every `ApiNamespace` call, server action and route handler is one Lambda invocation with a 6 MB request and response limit. A base64 body leaves about 4.5 MB for the file. A larger upload works under `cdk-blocks dev` and fails after deploy. See `cdk-blocks migrate guide aws-limits`.
+- Reason: every `ApiNamespace` call, server action and route handler is one Lambda invocation with a 6 MB request and response limit. A base64 body leaves about 4.5 MB for the file. A larger upload works under `cdk-blocks dev` and fails after deploy. See `cdk-blocks blockify-app guide aws-limits`.
 - Local disk does not persist on Lambda. Only `/tmp` is writable, each instance has its own `/tmp`, and it is lost when the instance is recycled. A file written by one request is absent for the next one. Every `fs.writeFile`, multer disk storage and `public/uploads` write moves to a `FileBucket`.
 - An API method returns a handle. The generated client turns it into a live object in the browser:
   - `await bucket.createUploadHandle(key, { contentType?, contentLength?, expiresIn? })` returns a `FileUploadClient`: `upload(body: Blob | File | ArrayBuffer): Promise<void>` and `getUrl(): string`.
   - `await bucket.getFileHandle(key, { expiresIn?, attachment?, versionId? })` returns a `FileDownloadClient`: `download(): Promise<Blob>` and `getUrl(): string`.
   - `putUrl(key, options)` and `getUrl(key, options)` take the same options and return the raw URL string. Use them for `<img src>`, `<a href>` and non-browser callers.
 - `upload()` sends a `PUT` with the signed `Content-Type` and throws `Upload failed: <status>` on a non-2xx status. `download()` throws `Download failed: <status>`.
-- The handle is hydrated by `@aws-blocks/bb-file-bucket/middleware`, which `aws-blocks/client.js` imports when the backend has a `FileBucket`. Run `npx --no -- cdk-blocks generate client` after you add the first bucket. If the import does not resolve with a strict package manager, see `cdk-blocks migrate guide package-managers`.
+- The handle is hydrated by `@aws-blocks/bb-file-bucket/middleware`, which `aws-blocks/client.js` imports when the backend has a `FileBucket`. Run `npx --no -- cdk-blocks generate client` after you add the first bucket. If the import does not resolve with a strict package manager, see `cdk-blocks blockify-app guide package-managers`.
 - Server-side methods: `put(key, body: Buffer | string, { contentType?, metadata?, cacheControl? })`, `get(key)` (returns `{ body: Buffer, contentType, metadata, size }` or `null` for a missing file; it does not throw), `delete(key)`, `deleteBatch(keys)`, `scan({ prefix })`.
 
 ## Rewrite an upload route in three steps
@@ -81,8 +81,8 @@ await handle.upload(file);
 await api.finishAvatarUpload(file.name);
 ```
 
-- Keep `requireAuth` only where the original route required a signed-in user. See `cdk-blocks migrate guide auth` for the user object.
-- Server-side processing (resize, PDF text extraction, virus scan) moves to an `AsyncJob` that reads with `bucket.get(key)` and writes the result with `bucket.put(...)`. Submit it from step 3 with the key as payload. See `cdk-blocks migrate guide jobs`.
+- Keep `requireAuth` only where the original route required a signed-in user. See `cdk-blocks blockify-app guide auth` for the user object.
+- Server-side processing (resize, PDF text extraction, virus scan) moves to an `AsyncJob` that reads with `bucket.get(key)` and writes the result with `bucket.put(...)`. Submit it from step 3 with the key as payload. See `cdk-blocks blockify-app guide jobs`.
 - A small file that the server itself produces (a generated report) can use `bucket.put()` directly, because the bytes never cross the API.
 
 ## Keys

@@ -1050,7 +1050,7 @@ async function integrateWithExistingProject(targetDir: string, templateName = 'd
   printTypeScriptSteps(existingPkg);
   // Last, so that a caller that reads only the end of this output (an agent piping it through `tail`) sees it.
   console.log('Moving the app itself onto AWS Blocks (hosting, API routes, data, sign-in)? The procedure, written');
-  console.log('for a coding agent: npx --no -- cdk-blocks migrate playbook');
+  console.log('for a coding agent: npx --no -- cdk-blocks blockify-app playbook');
 }
 
 /** The guide section with the TypeScript steps below, also for apps scaffolded before templates split their tsconfig. */

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * The `cdk-blocks migrate` subcommands that help a coding agent move an
+ * The `cdk-blocks blockify-app` subcommands that help a coding agent move an
  * existing app onto AWS Blocks: `playbook` (what to do, for this app), `guide`
  * (one topic in depth), `check` (the playbook's rules, checked on the files)
  * and `skill` (the same text as an Agent Skill directory).
@@ -17,14 +17,15 @@ import type { Context } from '../context.js';
 import { CliError, ExitCode, UsageError } from '../errors.js';
 import { suggest } from '../parse.js';
 import type { CommandInput } from '../registry.js';
-import { checkMigration } from './migrate-check.js';
-import { composePlaybook, listGuides, readGuide, SKILL_DIR } from './migrate-playbook.js';
+import { checkMigration } from './blockify-check.js';
+import { composePlaybook, listGuides, readGuide, SKILL_DIR } from './blockify-playbook.js';
+import { checkServerBundle } from './blockify-server.js';
 
 /** The directory name of the skill, which the Agent Skills format requires to equal its `name`. */
 const SKILL_NAME = 'migrate-to-aws-blocks';
 
-/** `cdk-blocks migrate playbook`: exit 1 with the reasons when the app cannot be migrated as it is. */
-export async function migratePlaybook(ctx: Context): Promise<number> {
+/** `cdk-blocks blockify-app playbook`: exit 1 with the reasons when the app cannot be migrated as it is. */
+export async function blockifyPlaybook(ctx: Context): Promise<number> {
 	const result = composePlaybook(ctx.startDir);
 	if (result.playbook !== null) {
 		ctx.out.result(result, result.playbook);
@@ -42,8 +43,8 @@ export async function migratePlaybook(ctx: Context): Promise<number> {
 	return ExitCode.Failure;
 }
 
-/** `cdk-blocks migrate guide [name...]`: the named guides in full, or the list of guides. */
-export async function migrateGuide(ctx: Context, input: CommandInput): Promise<number> {
+/** `cdk-blocks blockify-app guide [name...]`: the named guides in full, or the list of guides. */
+export async function blockifyGuide(ctx: Context, input: CommandInput): Promise<number> {
 	const guides = listGuides();
 	const names = input.positionals;
 	if (names.length === 0) {
@@ -69,9 +70,15 @@ export async function migrateGuide(ctx: Context, input: CommandInput): Promise<n
 	return ExitCode.Ok;
 }
 
-/** `cdk-blocks migrate check`: exit 1 when a check fails. */
-export async function migrateCheck(ctx: Context): Promise<number> {
-	const result = checkMigration(ctx.startDir);
+/**
+ * `cdk-blocks blockify-app check`: exit 1 when a check fails. With `--server`
+ * it also starts the server function that `cdk synth` wrote.
+ */
+export async function blockifyCheck(ctx: Context, input: CommandInput): Promise<number> {
+	const files = checkMigration(ctx.startDir);
+	const withServer = input.flags.server === true;
+	const checks = withServer ? [...files.checks, ...(await checkServerBundle(ctx.startDir))] : files.checks;
+	const result = { ok: checks.every((check) => check.ok), checks };
 	const lines = result.checks.flatMap((check) =>
 		check.ok
 			? [`ok    ${check.id}: ${check.message}`]
@@ -81,15 +88,17 @@ export async function migrateCheck(ctx: Context): Promise<number> {
 	lines.push(
 		'',
 		failed === 0
-			? 'All checks passed. These checks read files only: run the local server, the build and cdk synth as the playbook says.'
+			? withServer
+				? 'All checks passed. Apart from the server function, these checks read files only: run the local server and the build as the playbook says.'
+				: 'All checks passed. These checks read files only: run the local server, the build and cdk synth as the playbook says.'
 			: `${failed} check${failed === 1 ? '' : 's'} failed. Fix ${failed === 1 ? 'it' : 'them'} and run the command again.`,
 	);
 	ctx.out.result(result, lines.join('\n'));
 	return result.ok ? ExitCode.Ok : ExitCode.Failure;
 }
 
-/** `cdk-blocks migrate skill <dir>`: copy the skill to `<dir>/migrate-to-aws-blocks`. */
-export async function migrateSkill(ctx: Context, input: CommandInput): Promise<number> {
+/** `cdk-blocks blockify-app skill <dir>`: copy the skill to `<dir>/migrate-to-aws-blocks`. */
+export async function blockifySkill(ctx: Context, input: CommandInput): Promise<number> {
 	const target = join(resolve(ctx.startDir, input.positionals[0]), SKILL_NAME);
 	if (existsSync(target) && input.flags.force !== true) {
 		throw new CliError(`${target} already exists.`, { hint: 'pass --force to replace its files' });
