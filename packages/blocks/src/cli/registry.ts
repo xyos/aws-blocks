@@ -10,6 +10,7 @@
  */
 
 import { migrate } from './commands/migrate.js';
+import { migrateCheck, migrateGuide, migratePlaybook, migrateSkill } from './commands/migrate-app.js';
 import * as commands from './commands.js';
 import type { Context } from './context.js';
 
@@ -321,7 +322,10 @@ export const COMMANDS: readonly CommandSpec[] = [
 		json: { ...DEPLOY_RESULT, live: null },
 		examples: [
 			{ command: 'cdk-blocks deploy', description: 'Deploy to production' },
-			{ command: 'cdk-blocks deploy --wait-live=300', description: 'Deploy, then wait up to 300s for the new build' },
+			{
+				command: 'cdk-blocks deploy --wait-live=300',
+				description: 'Deploy, then wait up to 300s for the new build',
+			},
 			{ command: 'cdk-blocks deploy --output json', description: 'Print {apiUrl, url, stack, account, region}' },
 			{ command: 'API_URL=$(cdk-blocks deploy --query apiUrl)', description: 'Print only the API URL, raw' },
 		],
@@ -452,7 +456,8 @@ export const COMMANDS: readonly CommandSpec[] = [
 			{
 				name: 'force',
 				type: 'boolean',
-				description: 'Write aws-blocks/client.js even when package.json sets "blocks.dev.generateClient": false',
+				description:
+					'Write aws-blocks/client.js even when package.json sets "blocks.dev.generateClient": false',
 			},
 		],
 		examples: [{ command: 'cdk-blocks generate client', description: 'Write aws-blocks/client.js' }],
@@ -506,7 +511,10 @@ export const COMMANDS: readonly CommandSpec[] = [
 				command: 'cdk-blocks db migrate aws-blocks/migrations',
 				description: 'Apply pending migrations to the local database',
 			},
-			{ command: 'cdk-blocks db status aws-blocks/migrations', description: 'Show applied and pending migrations' },
+			{
+				command: 'cdk-blocks db status aws-blocks/migrations',
+				description: 'Show applied and pending migrations',
+			},
 			{ command: 'cdk-blocks db pull', description: 'Introspect the database and write its files' },
 		],
 		handler: commands.db,
@@ -521,7 +529,9 @@ export const COMMANDS: readonly CommandSpec[] = [
 			{ name: 'options', description: '--force overwrites an existing copy', variadic: true },
 		],
 		passthrough: true,
-		examples: [{ command: 'cdk-blocks vendorize @aws-blocks/bb-kv-store', description: 'Copy KVStore into the app' }],
+		examples: [
+			{ command: 'cdk-blocks vendorize @aws-blocks/bb-kv-store', description: 'Copy KVStore into the app' },
+		],
 		handler: commands.vendorize,
 	},
 	{
@@ -581,11 +591,135 @@ export const COMMANDS: readonly CommandSpec[] = [
 		handler: migrate,
 	},
 	{
+		path: ['migrate', 'playbook'],
+		group: 'Project',
+		summary: 'Print the playbook for moving an existing app onto AWS Blocks (for coding agents)',
+		description:
+			'Print the playbook that a coding agent follows to move an existing web app (Next.js, a Vite or\n' +
+			'other single-page app, a static site, an app with its own Node.js server) onto AWS Blocks, in\n' +
+			'the same repository. Run it in the root of an app that is not on AWS Blocks yet; it needs no\n' +
+			'installed dependencies and no AWS account, and it changes no file.\n' +
+			'It reads package.json, the lockfiles, the framework and platform config files and the source\n' +
+			'files (never the values in .env files), and prints: what it detected, with the file or\n' +
+			'dependency that shows it; the procedure, with the sections that apply to this app; and the\n' +
+			'guides to read for the surfaces the app has ("cdk-blocks migrate guide <name>").\n' +
+			'When the app cannot be migrated as it is (a server-rendered Next.js version that AWS Blocks\n' +
+			'does not host), it prints the reason and the fix, and exits 1; with --output json, "playbook"\n' +
+			'is null and "blockers" lists them.\n' +
+			'The text is the "migrate-to-aws-blocks" Agent Skill that this package ships in skills/;\n' +
+			'"cdk-blocks migrate skill <dir>" copies it for agents that load skills.',
+		json: {
+			app: {
+				name: null,
+				hasPackageJson: null,
+				blocks: null,
+				packageManager: null,
+				lockfiles: [null],
+				framework: null,
+				frameworkPackage: null,
+				frameworkVersion: null,
+				rendering: null,
+				buildScript: null,
+				startScript: null,
+				envVars: [null],
+			},
+			signals: [{ id: null, category: null, evidence: null }],
+			blockers: [{ id: null, reason: null, fix: null }],
+			notes: [null],
+			guides: [{ name: null, title: null, readWhen: null, recommended: null }],
+			playbook: null,
+		},
+		examples: [
+			{ command: 'cdk-blocks migrate playbook', description: 'Print the playbook for the app in this directory' },
+			{
+				command: 'npx -y -p @aws-blocks/blocks cdk-blocks migrate playbook',
+				description: 'The same, in an app that has not installed @aws-blocks/blocks yet',
+			},
+			{
+				command: 'cdk-blocks migrate playbook --query app.framework',
+				description: 'Print only the detected framework',
+			},
+		],
+		handler: migratePlaybook,
+	},
+	{
+		path: ['migrate', 'guide'],
+		group: 'Project',
+		summary: 'Print a migration guide: auth, database, nextjs, secrets, …',
+		description:
+			'Print one or more guides of the migration playbook, each on one topic: how a surface of an\n' +
+			'existing app (sign-in, relational data, file uploads, scheduled jobs, secrets, API routes) maps\n' +
+			'to AWS Blocks, what differs between the local server and AWS, and what to record for the user.\n' +
+			'Without a name it lists the guides and when to read each one.',
+		args: [
+			{ name: 'name', description: 'A guide name, for example "auth"; several print in order', variadic: true },
+		],
+		json: { guides: [{ name: null, title: null, readWhen: null, text: null }] },
+		examples: [
+			{ command: 'cdk-blocks migrate guide', description: 'List the guides' },
+			{ command: 'cdk-blocks migrate guide auth database', description: 'Print two guides' },
+		],
+		handler: migrateGuide,
+	},
+	{
+		path: ['migrate', 'check'],
+		group: 'Project',
+		summary: 'Check a migrated app against the playbook rules that its files show',
+		description:
+			'Check the app in this directory against the rules of the migration playbook that its files show:\n' +
+			'the scaffold, the dependencies and the workspace, one lockfile, a backend without the demo API\n' +
+			'and with a scope id that AWS resource names can hold,\n' +
+			'the Hosting block for the detected framework (for Nuxt, a server that streams its responses; for\n' +
+			'Astro with its own adapter, a server bundle that needs no node_modules), the OpenNext and Next.js\n' +
+			'versions, the same major\n' +
+			'version of the framework as in the last commit, every environment variable that server code reads\n' +
+			'declared on the Hosting block, client generation in the build, the .gitignore entries, and\n' +
+			'MIGRATION.md: its sections, no open task, and each Hosting secret() or config() value named\n' +
+			'under "Before deploy".\n' +
+			'It reads files and asks git which paths are ignored. It runs no build, no synth and no server:\n' +
+			'the validate task of the playbook does those.\n' +
+			'Exit codes: 0 when every check passes; 1 when one fails, each with a "Fix:" line.',
+		json: { ok: null, checks: [{ id: null, ok: null, message: null, fix: null }] },
+		examples: [
+			{ command: 'cdk-blocks migrate check', description: 'Check the app in this directory' },
+			{ command: 'cdk-blocks migrate check --query ok', description: 'Print true or false' },
+		],
+		handler: migrateCheck,
+	},
+	{
+		path: ['migrate', 'skill'],
+		group: 'Project',
+		summary: 'Copy the migration playbook as an Agent Skill into a skills directory',
+		description:
+			'Copy the "migrate-to-aws-blocks" Agent Skill (SKILL.md and its references/) to\n' +
+			'<dir>/migrate-to-aws-blocks, for a coding agent that loads skills from a directory, for example\n' +
+			'.claude/skills or .agents/skills. The skill is the text that "cdk-blocks migrate playbook" and\n' +
+			'"cdk-blocks migrate guide" print.',
+		args: [
+			{
+				name: 'dir',
+				description: 'The skills directory to copy into, for example .claude/skills',
+				required: true,
+			},
+		],
+		flags: [{ name: 'force', type: 'boolean', description: 'Replace the files of an existing copy' }],
+		json: { skill: null, path: null, files: [null] },
+		examples: [
+			{
+				command: 'cdk-blocks migrate skill .claude/skills',
+				description: 'Install the skill for Claude Code in this project',
+			},
+		],
+		handler: migrateSkill,
+	},
+	{
 		path: ['help'],
 		group: 'Project',
 		summary: 'Show help for a command',
 		args: [{ name: 'command', description: 'For example "sandbox destroy"', variadic: true }],
-		examples: [{ command: 'cdk-blocks help sandbox destroy', description: 'Help for "cdk-blocks sandbox destroy"' }],
+		examples: [
+			{ command: 'cdk-blocks help sandbox destroy', description: 'Help for "cdk-blocks sandbox destroy"' },
+		],
 		handler: commands.help,
 	},
 ];
