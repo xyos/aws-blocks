@@ -209,6 +209,7 @@ Write these rules into the tasks they apply to.
 ## Frontend tasks
 
 - Replace each call to an API route that became a method with `api.method(args)` from `import { api } from 'aws-blocks'`. The method returns the parsed result, so the `fetch`, `.json()`, status checks and headers around the old call go away. Guide `client-wiring`.
+- Server code of the framework (a page, a layout, a `load` function) that fetches the app's own URL for a route you moved to the backend must call the backend instead, through `api`. The local server does not show the difference, because it serves both from one port; on AWS they are different functions, and the page fails. Guide `client-wiring`, "Server code of the frontend framework".
 - In browser code, import Blocks helpers only from `@aws-blocks/blocks/client` and `@aws-blocks/blocks/ui`. The package root has nothing for the browser.
 - Replace the sign-in UI only when auth changed. Keep the app's look: build the forms with the app's own components on top of `authApi`. Guide `auth`.
 - Leave `BLOCKS_API_URL` unset everywhere. The dev server, the sandbox and the deploy each provide the API location; a value you set makes the local server proxy to it.
