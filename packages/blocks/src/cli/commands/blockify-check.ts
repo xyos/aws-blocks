@@ -13,7 +13,7 @@
 import { spawnSync } from 'node:child_process';
 import { readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { type Detection, detectApp, findInSources } from './blockify-detect.js';
+import { type Detection, detectApp, escapeRegExp, findInSources } from './blockify-detect.js';
 import { NEXT_SUPPORTED_RANGE, rangeStanding, scaffoldCommand } from './blockify-playbook.js';
 
 export interface Check {
@@ -393,12 +393,12 @@ function checkApp(root: string, { app, signals }: Detection): Check[] {
 	if (app.rendering === 'ssr') {
 		const unset = app.envVars
 			.filter((name) => !/^(?:NEXT_PUBLIC_|VITE_|PUBLIC_|BLOCKS_|AWS_)/.test(name))
-			.filter((name) => !new RegExp(`(?:\\b|['"])${name}['"]?\\s*:`).test(infra))
+			.filter((name) => !new RegExp(`(?:\\b|['"])${escapeRegExp(name)}['"]?\\s*:`).test(infra))
 			.map((name) => ({
 				name,
 				file: findInSources(
 					root,
-					new RegExp(`process\\.env(?:\\.${name}\\b|\\[['"]${name}['"]\\])`),
+					new RegExp(`process\\.env(?:\\.${escapeRegExp(name)}\\b|\\[['"]${escapeRegExp(name)}['"]\\])`),
 					NOT_DEPLOYED_CODE,
 				),
 			}))

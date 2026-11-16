@@ -433,9 +433,19 @@ function detectPackageManager(
 	return { packageManager: own ?? workspaceManager(root) ?? 'npm', lockfiles };
 }
 
+/**
+ * `text` as a literal inside a regular expression, for a name that is put into a pattern. Detection only
+ * collects names of letters, digits and `_`, which need no escape; the patterns do not depend on that.
+ * The same function as `escapeRegExp` in `@aws-blocks/core/bb-utils`, which the CLI does not import: it loads
+ * core only through `core-load.ts`.
+ */
+export function escapeRegExp(text: string): string {
+	return text.replace(/[\\^$.*+?()[\]{}|/]/g, '\\$&').replaceAll('-', '\\x2d');
+}
+
 /** The value of a string option in a config file's text: `basePath: '/docs'` gives `/docs`. */
 function configString(text: string, key: string): string | undefined {
-	return new RegExp(`\\b${key}\\s*:\\s*(['"\`])([^'"\`]*)\\1`).exec(text)?.[2];
+	return new RegExp(`\\b${escapeRegExp(key)}\\s*:\\s*(['"\`])([^'"\`]*)\\1`).exec(text)?.[2];
 }
 
 interface FrameworkResult {
